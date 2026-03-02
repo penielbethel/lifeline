@@ -475,7 +475,7 @@ const Shop = () => {
       </section>
 
       {/* MAIN CONTENT */}
-      <section style={{ padding: '3rem 0 6rem' }}>
+      <section style={{ padding: '3rem 0 6rem', overflow: 'hidden' }}>
         <div className="container">
 
           {/* Order Success */}
@@ -502,20 +502,23 @@ const Shop = () => {
               {/* Promo Banner */}
               <PromoBanner promos={activePromos} />
 
-              {/* Filters */}
-              <div className="shop-filters-container" style={{ marginBottom: '1.75rem', gap: '0.75rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#475569', fontWeight: '600', fontSize: '0.875rem', flexShrink: 0 }}>
-                  <Filter size={16} /> Filter:
+              {/* Filters — overflow-hidden wrapper prevents escape on small screens */}
+              <div style={{ width: '100%', maxWidth: '100%', overflow: 'hidden', marginBottom: '1.75rem' }}>
+                <div className="shop-filters-container">
+                  <div className="shop-filters-label">
+                    <Filter size={16} />
+                    <span>Filter:</span>
+                  </div>
+                  {CATEGORIES.map(cat => (
+                    <button
+                      key={cat.id}
+                      className={`filter-pill ${filter === cat.id ? 'active' : ''}`}
+                      onClick={() => setFilter(cat.id)}
+                    >
+                      {cat.icon} {cat.label}
+                    </button>
+                  ))}
                 </div>
-                {CATEGORIES.map(cat => (
-                  <button
-                    key={cat.id}
-                    className={`filter-pill ${filter === cat.id ? 'active' : ''}`}
-                    onClick={() => setFilter(cat.id)}
-                  >
-                    {cat.icon} {cat.label}
-                  </button>
-                ))}
               </div>
 
               {/* Feature Highlights */}
