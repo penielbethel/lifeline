@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" href="/images/Lifeline Main Logo.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <title>Lifeline Healthcare Global Options | Premium Agric Food Value Chain</title>
+  <meta name="description"
+    content="Lifeline Healthcare Global Options is a leading Nigerian conglomerate specializing in sustainable agricultural production, high-quality food processing, real estate, and strategic investments. Feeding the future through innovation." />
+  <meta name="keywords"
+    content="Lifeline Healthcare Global Options, Agriculture Nigeria, Food Processing Nigeria, Sustainable Farming, Agric Food Value Chain, Premium Honey Nigeria, Kuli-Kuli Production, Real Estate Nigeria, Industrial Investments Africa" />
+  <meta name="author" content="Lifeline Healthcare Global Options" />
+  <meta name="robots" content="index, follow" />
+  <meta name="theme-color" content="#D4AF37" />
+
+  <!-- Open Graph / Facebook / WhatsApp -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://lifelineglobaloption.vercel.app/" />
+  <meta property="og:title" content="Lifeline Healthcare Global Options | Premium Agric Food Value Chain" />
+  <meta property="og:description"
+    content="Redefining agriculture and food processing in Nigeria. From nutrient-rich honey to high-quality industrial solutions." />
+  <meta property="og:image" content="/images/Lifeline Main Logo.png" />
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:url" content="https://lifelineglobaloption.vercel.app/" />
+  <meta property="twitter:title" content="Lifeline Healthcare Global Options | Premium Agric Food Value Chain" />
+  <meta property="twitter:description"
+    content="Redefining agriculture and food processing in Nigeria. Feeding the future through innovation." />
+  <meta property="twitter:image" content="/images/Lifeline Main Logo.png" />
+
+</head>
+
+<body>
+  <!-- Critical Rendering Path Preloader -->
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      /* background-color: #1A1A1A; Removed to prevent global dark content */
+    }
+
+    #root:empty+#app-preloader {
+      display: flex;
+    }
+
+    #app-preloader {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: #1A1A1A;
+      z-index: 99999;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      transition: opacity 0.5s ease-out;
+    }
+
+    .preloader-content {
+      text-align: center;
+    }
+
+    .preloader-text {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 3rem;
+      font-weight: 800;
+      color: #D4AF37;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin: 0 0 10px 0;
+      animation: pulse 2s infinite;
+    }
+
+    .preloader-subtext {
+      font-family: sans-serif;
+      font-size: 1rem;
+      color: #888;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+    }
+
+    .loading-bar-container {
+      width: 200px;
+      height: 2px;
+      background-color: rgba(212, 175, 55, 0.2);
+      margin-top: 30px;
+      position: relative;
+      overflow: hidden;
+      border-radius: 4px;
+    }
+
+    .loading-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 0%;
+      background-color: #D4AF37;
+      animation: progress 3s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.7;
+      }
+    }
+
+    @keyframes progress {
+      0% {
+        left: -50%;
+        width: 50%;
+      }
+
+      50% {
+        width: 50%;
+      }
+
+      100% {
+        left: 100%;
+        width: 50%;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .preloader-text {
+        font-size: 2rem;
+      }
+
+      .preloader-subtext {
+        font-size: 0.8rem;
+      }
+    }
+  </style>
+
+  <div id="root"></div>
+
+  <!-- Immediate Preloader HTML -->
+  <div id="app-preloader">
+    <div class="preloader-content">
+      <h1 class="preloader-text">Welcome to Lifeline</h1>
+      <p class="preloader-subtext">Premium Agric Food Value Chain</p>
+      <div class="loading-bar-container">
+        <div class="loading-bar"></div>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+
+</html>
