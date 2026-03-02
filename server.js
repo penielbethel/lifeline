@@ -29,6 +29,7 @@ const Token = mongoose.model('Token', TokenSchema);
 
 const UserSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true },
+    fullName: { type: String },
     password: { type: String }, // Optional for SuperAdmins
     role: { type: String, enum: ['admin', 'superadmin', 'doctor', 'nurse', 'lab_scientist', 'pharmacist', 'hr'], default: 'admin' },
     createdAt: { type: Date, default: Date.now }
@@ -92,11 +93,11 @@ const CustomerSchema = new mongoose.Schema({
 });
 const Customer = mongoose.model('Customer', CustomerSchema);
 
-// Product Schema
+// Product Schema (Converted for Pharmacy Use)
 const ProductSchema = new mongoose.Schema({
     id: { type: String, required: true, unique: true },
     name: { type: String, required: true },
-    category: { type: String, required: true },
+    category: { type: String, required: true }, // e.g., Antibiotics, Analgesics
     tagline: { type: String },
     size: { type: String, required: true },
     description: { type: String },
@@ -104,6 +105,8 @@ const ProductSchema = new mongoose.Schema({
     image: { type: String },
     rating: { type: Number, default: 0 },
     reviews: { type: Number, default: 0 },
+    isPrescriptionRequired: { type: Boolean, default: false },
+    expiryDate: { type: Date },
     isNewArrival: { type: Boolean, default: false },
     stockStatus: { type: String, enum: ['in_stock', 'low_stock', 'out_of_stock'], default: 'in_stock' },
     createdAt: { type: Date, default: Date.now },

@@ -228,8 +228,8 @@ const ProductDetailsModal = ({ product, similarProducts, onClose, onAddToCart, o
                 {product.description}
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', marginBottom: '2rem' }}>
-                <span style={{ fontSize: '2rem', fontWeight: '800', color: '#D4AF37' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', marginBottom: '1.5rem' }}>
+                <span style={{ fontSize: '2rem', fontWeight: '800', color: '#059669' }}>
                   ₦{product.price.toLocaleString()}
                 </span>
                 <span style={{ fontSize: '1.1rem', color: '#6B7280' }}>
@@ -237,16 +237,24 @@ const ProductDetailsModal = ({ product, similarProducts, onClose, onAddToCart, o
                 </span>
               </div>
 
+              {product.isPrescriptionRequired && (
+                <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', padding: '1rem', borderRadius: '8px', marginBottom: '2rem', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                  <div style={{ background: '#DC2626', color: '#fff', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold' }}>Rx</div>
+                  <p style={{ fontSize: '0.9rem', color: '#991B1B', margin: 0 }}>This is a **Prescription-Only** medication. You will be required to present a valid doctor's prescription upon delivery or pickup.</p>
+                </div>
+              )}
+
               <button
                 onClick={() => { onAddToCart(product); onClose(); }}
                 style={{
-                  width: '100%', padding: '1rem 2rem', backgroundColor: '#D4AF37', color: '#1A1A1A',
+                  width: '100%', padding: '1rem 2rem', backgroundColor: product.isPrescriptionRequired ? '#DC2626' : '#059669', color: '#FFF',
                   border: 'none', borderRadius: '8px', fontSize: '1.1rem', fontWeight: '700', cursor: 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem',
                   transition: 'transform 0.2s', boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
                 }}
               >
-                <Plus size={24} /> Add to Basket
+                {product.isPrescriptionRequired ? <CheckCircle size={24} /> : <Plus size={24} />}
+                {product.isPrescriptionRequired ? 'Add to Prescription Cart' : 'Add to Pharma Basket'}
               </button>
             </div>
           </div>
@@ -649,22 +657,22 @@ const Shop = () => {
                 <div className="shop-feature-card">
                   <div className="f-icon-box"><Truck size={24} /></div>
                   <div>
-                    <h4>Fast Delivery</h4>
-                    <p>Lagos & Nationwide</p>
+                    <h4>Med-Delivery</h4>
+                    <p>Subsidized & Secure</p>
                   </div>
                 </div>
                 <div className="shop-feature-card">
                   <div className="f-icon-box"><CreditCard size={24} /></div>
                   <div>
-                    <h4>Easy Payment</h4>
-                    <p>Transfer or Pay on Delivery</p>
+                    <h4>Safe Checkout</h4>
+                    <p>Online or Bank Transfer</p>
                   </div>
                 </div>
                 <div className="shop-feature-card">
                   <div className="f-icon-box"><CheckCircle size={24} /></div>
                   <div>
-                    <h4>100% Organic</h4>
-                    <p>No artificial additives</p>
+                    <h4>NAFDAC Certified</h4>
+                    <p>100% Genuine Drugs</p>
                   </div>
                 </div>
               </div>
@@ -712,6 +720,17 @@ const Shop = () => {
                                 boxShadow: '0 2px 4px rgba(0,0,0,0.1)', textAlign: 'center'
                               }}>
                                 New
+                              </div>
+                            )}
+                            {product.isPrescriptionRequired && !isOutOfStock && (
+                              <div style={{
+                                backgroundColor: '#DC2626', color: '#FFF',
+                                padding: '4px 8px', borderRadius: '4px',
+                                fontSize: '11px', fontWeight: '800', textTransform: 'uppercase',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)', textAlign: 'center',
+                                display: 'flex', alignItems: 'center', gap: '2px'
+                              }}>
+                                <span>Rx</span> Required
                               </div>
                             )}
                             {isLowStock && !isOutOfStock && (

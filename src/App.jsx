@@ -6,12 +6,12 @@ import Home from './pages/Home';
 import Contact from './pages/Contact';
 import Shop from './pages/Shop';
 import About from './pages/About';
-import Investments from './pages/Investments';
-import Partners from './pages/Partners';
+import Services from './pages/Services';
+import Facilities from './pages/Facilities';
 import Legal from './pages/Legal';
 import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
-import Blog from './pages/Blog';
+import HealthCorner from './pages/HealthCorner';
 import Preloader from './components/Preloader';
 
 function App() {
@@ -44,9 +44,9 @@ function App() {
           {/* Other Routes */}
           <Route path="/shop" element={<Shop />} />
           <Route path="/about" element={<About />} />
-          <Route path="/investments" element={<Investments />} />
-          <Route path="/partners" element={<Partners />} />
-          <Route path="/blog" element={<Blog />} />
+          <Route path="/services" element={<Services />} />
+          <Route path="/facilities" element={<Facilities />} />
+          <Route path="/health-corner" element={<HealthCorner />} />
           <Route path="/privacy" element={<Legal />} />
           <Route path="/terms" element={<Legal />} />
           <Route path="/login" element={<Login />} />

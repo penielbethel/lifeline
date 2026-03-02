@@ -5,6 +5,7 @@ require('dotenv').config({ override: true });
 const mongoose = require('mongoose');
 
 // Product Schema
+// Product Schema
 const ProductSchema = new mongoose.Schema({
     id: { type: String, required: true, unique: true },
     name: { type: String, required: true },
@@ -16,6 +17,7 @@ const ProductSchema = new mongoose.Schema({
     image: { type: String },
     rating: { type: Number, default: 0 },
     reviews: { type: Number, default: 0 },
+    isPrescriptionRequired: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
 });
@@ -32,7 +34,8 @@ const initialProducts = [
         price: 500,
         image: 'https://images.unsplash.com/photo-1584308666744-24d5e45c7540?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
         rating: 4.8,
-        reviews: 124
+        reviews: 124,
+        isPrescriptionRequired: false
     },
     {
         id: 'amoxicillin',
@@ -44,7 +47,8 @@ const initialProducts = [
         price: 1200,
         image: 'https://images.unsplash.com/photo-1585435557343-3b092031a831?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
         rating: 4.9,
-        reviews: 86
+        reviews: 86,
+        isPrescriptionRequired: true
     },
     {
         id: 'vitaminc',
@@ -56,19 +60,21 @@ const initialProducts = [
         price: 2500,
         image: 'https://images.unsplash.com/photo-1550572017-edb79aa42e12?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
         rating: 5.0,
-        reviews: 215
+        reviews: 215,
+        isPrescriptionRequired: false
     },
     {
         id: 'artemether',
         name: 'Artemether/Lumefantrine',
-        category: 'Analgesics', // Often categorized under general or antimalarial, placing in Analgesics for now
+        category: 'Analgesics',
         tagline: 'Antimalarial Treatment',
         size: '24 Tablets',
         description: 'Highly effective combination therapy for the treatment of acute, uncomplicated malaria.',
         price: 1800,
         image: 'https://images.unsplash.com/photo-1471864190281-a93a3070b6de?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
         rating: 4.9,
-        reviews: 98
+        reviews: 98,
+        isPrescriptionRequired: true
     },
     {
         id: 'rocephin',
@@ -80,7 +86,8 @@ const initialProducts = [
         price: 3500,
         image: 'https://images.unsplash.com/photo-1631549916768-4119b2e5f926?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
         rating: 4.7,
-        reviews: 142
+        reviews: 142,
+        isPrescriptionRequired: true
     },
     {
         id: 'firstaidkit',
@@ -92,28 +99,26 @@ const initialProducts = [
         price: 8000,
         image: 'https://images.unsplash.com/photo-1628771065518-0d82f1938462?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
         rating: 5.0,
-        reviews: 310
+        reviews: 310,
+        isPrescriptionRequired: false
     }
 ];
 
 async function initProducts() {
     try {
-        console.log('Connecting to MongoDB...');
-        await mongoose.connect(process.env.MONGODB_URI);
-        console.log('✅ Connected to MongoDB');
+        console.log('Attempting to connect to MongoDB...');
+        await mongoose.connect(process.env.MONGODB_URI, {
+            serverSelectionTimeoutMS: 5000 // 5 seconds timeout
+        });
+        console.log('Connected to MongoDB successfully.');
 
-        // Check if products already exist
-        const existingCount = await Product.countDocuments();
-        if (existingCount > 0) {
-            console.log(`⚠️ Database already has ${existingCount} products. Deleting old products...`);
-            await Product.deleteMany({});
-            console.log('✅ Old products deleted');
-        }
+        console.log('Cleaning existing products...');
+        await Product.deleteMany({});
+        console.log('Existing products cleared.');
 
-        // Insert new products
-        console.log('Inserting products...');
+        console.log(`Seeding ${initialProducts.length} pharmacy products...`);
         await Product.insertMany(initialProducts);
-        console.log(`✅ Successfully initialized ${initialProducts.length} products!`);
+        console.log('Pharmacy products seeded successfully!');
 
         // Verify
         const products = await Product.find();
