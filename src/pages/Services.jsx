@@ -4,6 +4,8 @@ import Footer from '../components/Footer';
 import Hero from '../components/Hero';
 import { Stethoscope, Pill, Database, Activity, Shield, Microchip, Heart, Search, Truck } from 'lucide-react';
 
+const HERO_IMG = 'https://images.unsplash.com/photo-1551190822-a9333d879b1f?auto=format&fit=crop&w=1920&q=80';
+
 const Services = () => {
     useEffect(() => {
         document.title = "Our Services | Lifeline Healthcare Global Options - Comprehensive Medical & Pharmacy Care";
@@ -57,7 +59,7 @@ const Services = () => {
             <Hero
                 title="Our Specialized Services"
                 subtitle="Integrating advanced medical facilities with a structured pharmaceutical ecosystem for your total well-being."
-                bgImage="/images/banner_two.jpg"
+                bgImage={HERO_IMG}
             />
 
             {/* Hospital Services */}

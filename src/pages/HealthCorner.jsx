@@ -4,6 +4,8 @@ import Footer from '../components/Footer';
 import Hero from '../components/Hero';
 import { Heart, Activity, Pill, Clock, ArrowRight, BookOpen } from 'lucide-react';
 
+const HERO_IMG = 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=1920&q=80';
+
 const HealthCorner = () => {
     useEffect(() => {
         document.title = "Health Corner | Lifeline Healthcare Global Options - Expert Medical Advice";
@@ -37,7 +39,7 @@ const HealthCorner = () => {
             <Hero
                 title="The Health Corner"
                 subtitle="Reliable medical insights and wellness tips from our specialized doctors and pharmacists."
-                bgImage="/images/banner_two.jpg"
+                bgImage={HERO_IMG}
             />
 
             <section className="section" style={{ padding: '6rem 0' }}>

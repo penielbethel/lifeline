@@ -5,6 +5,8 @@ import Hero from '../components/Hero';
 import { Heart, Stethoscope, Activity, Shield, Users, Globe, Award, CheckCircle, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+const HERO_IMG = 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=1920&q=80';
+
 const About = () => {
     useEffect(() => {
         document.title = "About Us | Lifeline Healthcare Global Options - Our Medical Mission";
@@ -25,7 +27,7 @@ const About = () => {
             <Hero
                 title="About Lifeline Healthcare Global Options"
                 subtitle="Transforming the healthcare landscape through clinical excellence and digital innovation."
-                bgImage="/images/banner_two.jpg"
+                bgImage={HERO_IMG}
             />
 
             {/* Introduction & Our Story */}

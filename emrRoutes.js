@@ -1,164 +1,357 @@
 import express from 'express';
-import { Patient, MedicalTest, Prescription, MedicalHistory } from './emrModels.js';
+import { Patient, Vitals, Consultation, MedicalTest, Prescription, MedicalHistory } from './emrModels.js';
+
 const router = express.Router();
 
-// Middleware to check authentication (will be passed from server.js)
-const checkAuth = (req, res, next) => {
+// ─── Role guard helper ───────────────────────────────────────────────────────
+const allow = (...roles) => (req, res, next) => {
     if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
+    const superAllowed = req.user.role === 'superadmin';
+    if (!superAllowed && !roles.includes(req.user.role)) {
+        return res.status(403).json({ message: `Forbidden. Required role: ${roles.join(' or ')}` });
+    }
     next();
 };
 
-// Roles array: ['hr', 'doctor', 'nurse', 'lab_scientist', 'pharmacist', 'superadmin']
+// ══════════════════════════════════════════════════════════════════
+//  PATIENT MANAGEMENT   (HR/Admin, SuperAdmin)
+// ══════════════════════════════════════════════════════════════════
 
-// --- PATIENT MANAGEMENT (HR/Admin) ---
-router.post('/patients', checkAuth, async (req, res) => {
-    if (req.user.role !== 'hr' && req.user.role !== 'superadmin' && req.user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
+// Register new patient
+router.post('/patients', allow('hr', 'admin'), async (req, res) => {
     try {
-        const { name, age, gender, bloodGroup, genotype, phone, address } = req.body;
         const patientNumber = 'PT-' + Date.now().toString().slice(-6);
         const patient = new Patient({
-            patientNumber, name, age, gender, bloodGroup, genotype, phone, address,
-            registeredBy: req.user.id
+            patientNumber,
+            registeredBy: req.user.id,
+            ...req.body
         });
         await patient.save();
-        res.status(201).json({ message: 'Patient registered', patient });
+        res.status(201).json({ message: 'Patient registered successfully', patient });
     } catch (e) {
-        console.error(e);
-        res.status(500).json({ message: 'Server error' });
+        if (e.code === 11000) return res.status(400).json({ message: 'Patient record already exists.' });
+        res.status(500).json({ message: 'Server error', error: e.message });
     }
 });
 
-router.get('/patients', checkAuth, async (req, res) => {
+// Get all patients
+router.get('/patients', async (req, res) => {
+    if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
     try {
-        const patients = await Patient.find().sort({ createdAt: -1 });
+        const patients = await Patient.find()
+            .populate('registeredBy', 'fullName username role')
+            .sort({ createdAt: -1 });
         res.json(patients);
     } catch (e) {
         res.status(500).json({ message: 'Server error' });
     }
 });
 
-// --- MEDICAL TESTS (Doctor -> Lab Scientist) ---
-router.post('/medical-tests', checkAuth, async (req, res) => {
-    // Doctors or Nurses can order tests
-    if (req.user.role !== 'doctor' && req.user.role !== 'nurse') return res.status(403).json({ message: 'Forbidden' });
+// Get single patient
+router.get('/patients/:id', async (req, res) => {
+    if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
     try {
-        const { patientId, testsRequested } = req.body;
-        const test = new MedicalTest({
-            patientId,
-            doctorId: req.user.id,
-            testsRequested
-        });
-        await test.save();
-        res.status(201).json({ message: 'Tests requested', test });
+        const patient = await Patient.findById(req.params.id).populate('registeredBy', 'fullName');
+        if (!patient) return res.status(404).json({ message: 'Patient not found' });
+        res.json(patient);
     } catch (e) {
         res.status(500).json({ message: 'Server error' });
     }
 });
 
-router.get('/medical-tests', checkAuth, async (req, res) => {
+// Update patient status/info (HR only)
+router.patch('/patients/:id', allow('hr', 'admin'), async (req, res) => {
     try {
-        let tests;
-        if (req.user.role === 'lab_scientist') {
-            tests = await MedicalTest.find().populate('patientId doctorId').sort({ createdAt: -1 });
-        } else if (req.user.role === 'doctor') {
-            tests = await MedicalTest.find({ doctorId: req.user.id }).populate('patientId labScientistId').sort({ createdAt: -1 });
-        } else {
-            tests = await MedicalTest.find().populate('patientId doctorId labScientistId').sort({ createdAt: -1 });
-        }
+        const patient = await Patient.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        res.json({ message: 'Patient updated', patient });
+    } catch (e) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// ══════════════════════════════════════════════════════════════════
+//  VITALS / TRIAGE   (Nurse)
+// ══════════════════════════════════════════════════════════════════
+
+// Record vitals
+router.post('/vitals', allow('nurse'), async (req, res) => {
+    try {
+        const vitals = new Vitals({
+            nurseId: req.user.id,
+            ...req.body
+        });
+        await vitals.save();
+        res.status(201).json({ message: 'Vitals recorded successfully', vitals });
+    } catch (e) {
+        res.status(500).json({ message: 'Server error', error: e.message });
+    }
+});
+
+// Get vitals for a patient
+router.get('/vitals/:patientId', async (req, res) => {
+    if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
+    try {
+        const vitals = await Vitals.find({ patientId: req.params.patientId })
+            .populate('nurseId', 'fullName')
+            .sort({ createdAt: -1 });
+        res.json(vitals);
+    } catch (e) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// ══════════════════════════════════════════════════════════════════
+//  CONSULTATION   (Doctor)
+// ══════════════════════════════════════════════════════════════════
+
+// Create consultation
+router.post('/consultations', allow('doctor'), async (req, res) => {
+    try {
+        const consultation = new Consultation({
+            doctorId: req.user.id,
+            ...req.body
+        });
+        await consultation.save();
+        res.status(201).json({ message: 'Consultation recorded', consultation });
+    } catch (e) {
+        res.status(500).json({ message: 'Server error', error: e.message });
+    }
+});
+
+// Get consultations (Doctor sees their own, others see all)
+router.get('/consultations', async (req, res) => {
+    if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
+    try {
+        const filter = req.user.role === 'doctor' ? { doctorId: req.user.id } : {};
+        const consultations = await Consultation.find(filter)
+            .populate('patientId', 'name patientNumber bloodGroup genotype age gender')
+            .populate('doctorId', 'fullName')
+            .populate('vitalsId')
+            .sort({ createdAt: -1 });
+        res.json(consultations);
+    } catch (e) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Close/complete a consultation
+router.patch('/consultations/:id/complete', allow('doctor'), async (req, res) => {
+    try {
+        const consultation = await Consultation.findByIdAndUpdate(
+            req.params.id,
+            { status: 'completed', ...req.body },
+            { new: true }
+        );
+        res.json({ message: 'Consultation completed', consultation });
+    } catch (e) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// ══════════════════════════════════════════════════════════════════
+//  MEDICAL TESTS   (Doctor/Nurse → Lab Scientist)
+// ══════════════════════════════════════════════════════════════════
+
+// Order tests
+router.post('/medical-tests', allow('doctor', 'nurse'), async (req, res) => {
+    try {
+        const test = new MedicalTest({
+            doctorId: req.user.id,
+            ...req.body
+        });
+        await test.save();
+        res.status(201).json({ message: 'Tests ordered successfully', test });
+    } catch (e) {
+        res.status(500).json({ message: 'Server error', error: e.message });
+    }
+});
+
+// Get tests
+router.get('/medical-tests', async (req, res) => {
+    if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
+    try {
+        let filter = {};
+        if (req.user.role === 'doctor') filter = { doctorId: req.user.id };
+
+        const tests = await MedicalTest.find(filter)
+            .populate('patientId', 'name patientNumber age gender bloodGroup')
+            .populate('doctorId', 'fullName')
+            .populate('labScientistId', 'fullName')
+            .sort({ createdAt: -1 });
         res.json(tests);
     } catch (e) {
         res.status(500).json({ message: 'Server error' });
     }
 });
 
-router.patch('/medical-tests/:id/process', checkAuth, async (req, res) => {
-    if (req.user.role !== 'lab_scientist') return res.status(403).json({ message: 'Forbidden' });
+// Lab Scientist processes a test
+router.patch('/medical-tests/:id/process', allow('lab_scientist'), async (req, res) => {
     try {
         const { testPrices, totalCost, resultDescription, resultDocumentUrl } = req.body;
         const test = await MedicalTest.findById(req.params.id);
-        if (!test) return res.status(404).json({ message: 'Not found' });
+        if (!test) return res.status(404).json({ message: 'Test not found' });
 
         test.labScientistId = req.user.id;
-        test.testPrices = testPrices || test.testPrices;
-        test.totalCost = totalCost || test.totalCost;
-        test.resultDescription = resultDescription || test.resultDescription;
-        test.resultDocumentUrl = resultDocumentUrl || test.resultDocumentUrl;
+        if (testPrices) test.testPrices = testPrices;
+        if (totalCost !== undefined) test.totalCost = totalCost;
+        if (resultDescription) { test.resultDescription = resultDescription; }
+        if (resultDocumentUrl) { test.resultDocumentUrl = resultDocumentUrl; }
 
-        if (resultDescription || resultDocumentUrl) {
-            test.status = 'completed';
-            test.completedAt = Date.now();
-        } else {
-            test.status = 'processing';
-        }
+        test.status = (resultDescription || resultDocumentUrl) ? 'completed' : 'processing';
+        if (test.status === 'completed') test.completedAt = new Date();
 
         await test.save();
-        res.json({ message: 'Test updated', test });
+        res.json({ message: 'Test result updated', test });
     } catch (e) {
         res.status(500).json({ message: 'Server error' });
     }
 });
 
-// --- PRESCRIPTIONS (Doctor -> Nurse/Pharmacist) ---
-router.post('/prescriptions', checkAuth, async (req, res) => {
-    if (req.user.role !== 'doctor') return res.status(403).json({ message: 'Forbidden' });
+// ══════════════════════════════════════════════════════════════════
+//  PRESCRIPTIONS   (Doctor → Nurse/Pharmacist)
+// ══════════════════════════════════════════════════════════════════
+
+// Issue prescription
+router.post('/prescriptions', allow('doctor'), async (req, res) => {
     try {
-        const { patientId, testId, prescriptions } = req.body;
+        // Auto-compute totalDrugCost from individual costs
+        const drugs = req.body.prescriptions || [];
+        const totalDrugCost = drugs.reduce((sum, d) => sum + ((d.cost || 0) * (d.quantity || 1)), 0);
+
         const prescription = new Prescription({
-            patientId,
             doctorId: req.user.id,
-            testId,
-            prescriptions
+            totalDrugCost,
+            ...req.body
         });
         await prescription.save();
-        res.status(201).json({ message: 'Prescription made', prescription });
+        res.status(201).json({ message: 'Prescription issued', prescription });
+    } catch (e) {
+        res.status(500).json({ message: 'Server error', error: e.message });
+    }
+});
+
+// Get prescriptions
+router.get('/prescriptions', async (req, res) => {
+    if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
+    try {
+        const prescriptions = await Prescription.find()
+            .populate('patientId', 'name patientNumber age gender bloodGroup allergies')
+            .populate('doctorId', 'fullName')
+            .populate('consultationId')
+            .populate('dispensedBy', 'fullName')
+            .populate('administeredBy', 'fullName')
+            .sort({ createdAt: -1 });
+        res.json(prescriptions);
     } catch (e) {
         res.status(500).json({ message: 'Server error' });
     }
 });
 
-router.get('/prescriptions', checkAuth, async (req, res) => {
+// Pharmacist dispenses drugs
+router.patch('/prescriptions/:id/dispense', allow('pharmacist'), async (req, res) => {
     try {
-        const pres = await Prescription.find().populate('patientId doctorId testId').sort({ createdAt: -1 });
-        res.json(pres);
-    } catch (e) { res.status(500).json({ message: 'Server error' }); }
+        const pres = await Prescription.findById(req.params.id);
+        if (!pres) return res.status(404).json({ message: 'Prescription not found' });
+        pres.status = 'dispensed';
+        pres.dispensedBy = req.user.id;
+        await pres.save();
+        res.json({ message: 'Drugs dispensed', pres });
+    } catch (e) {
+        res.status(500).json({ message: 'Server error' });
+    }
 });
 
-router.patch('/prescriptions/:id/administer', checkAuth, async (req, res) => {
-    if (req.user.role !== 'nurse' && req.user.role !== 'pharmacist') return res.status(403).json({ message: 'Forbidden' });
+// Nurse administers treatment
+router.patch('/prescriptions/:id/administer', allow('nurse'), async (req, res) => {
     try {
-        const { treatmentCost } = req.body;
+        const { treatmentCost, notes } = req.body;
         const pres = await Prescription.findById(req.params.id);
-        pres.status = 'administered';
+        if (!pres) return res.status(404).json({ message: 'Prescription not found' });
+
         pres.administeredBy = req.user.id;
         pres.treatmentCost = treatmentCost || 0;
-        pres.administeredAt = Date.now();
+        pres.administeredAt = new Date();
+        if (notes) pres.notes = notes;
         await pres.save();
-        res.json({ message: 'Prescription administered', pres });
+        res.json({ message: 'Treatment administered', pres });
     } catch (e) {
         res.status(500).json({ message: 'Server error' });
     }
 });
 
-// --- MEDICAL HISTORY & BILLING (Nurse) ---
-router.post('/medical-history', checkAuth, async (req, res) => {
-    if (req.user.role !== 'nurse') return res.status(403).json({ message: 'Forbidden' });
+// ══════════════════════════════════════════════════════════════════
+//  MEDICAL HISTORY / BILLING   (Nurse compiles the invoice)
+// ══════════════════════════════════════════════════════════════════
+
+// Create invoice/history
+router.post('/medical-history', allow('nurse'), async (req, res) => {
     try {
-        const { patientId, testId, prescriptionId, totalTestCost, totalTreatmentCost } = req.body;
-        const grandTotal = (totalTestCost || 0) + (totalTreatmentCost || 0);
+        const { consultationFee = 0, totalTestCost = 0, totalTreatmentCost = 0, admissionCost = 0, otherCosts = [] } = req.body;
+        const otherTotal = otherCosts.reduce((s, c) => s + (c.amount || 0), 0);
+        const grandTotal = consultationFee + totalTestCost + totalTreatmentCost + admissionCost + otherTotal;
+
         const history = new MedicalHistory({
-            patientId, testId, prescriptionId, totalTestCost, totalTreatmentCost, grandTotal,
+            ...req.body,
+            grandTotal,
             recordedBy: req.user.id
         });
         await history.save();
-        res.status(201).json({ message: 'Final medical history recorded', history });
-    } catch (e) { res.status(500).json({ message: 'Server error' }); }
+        res.status(201).json({ message: 'Medical history & invoice created', history });
+    } catch (e) {
+        if (e.code === 11000) return res.status(400).json({ message: 'Invoice already exists for this record.' });
+        res.status(500).json({ message: 'Server error', error: e.message });
+    }
 });
 
-router.get('/medical-history', checkAuth, async (req, res) => {
+// Get all histories
+router.get('/medical-history', async (req, res) => {
+    if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
     try {
-        const history = await MedicalHistory.find().populate('patientId testId prescriptionId recordedBy').sort({ createdAt: -1 });
+        const history = await MedicalHistory.find()
+            .populate('patientId', 'name patientNumber age gender')
+            .populate('consultationId')
+            .populate('testId')
+            .populate('prescriptionId')
+            .populate('recordedBy', 'fullName')
+            .sort({ createdAt: -1 });
         res.json(history);
-    } catch (e) { res.status(500).json({ message: 'Server error' }); }
+    } catch (e) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Get history for one patient
+router.get('/medical-history/patient/:id', async (req, res) => {
+    if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
+    try {
+        const history = await MedicalHistory.find({ patientId: req.params.id })
+            .populate('consultationId')
+            .populate('testId')
+            .populate('prescriptionId')
+            .populate('recordedBy', 'fullName')
+            .sort({ createdAt: -1 });
+        res.json(history);
+    } catch (e) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Mark payment as received
+router.patch('/medical-history/:id/pay', allow('nurse', 'hr', 'admin'), async (req, res) => {
+    try {
+        const { amountPaid, paymentMethod } = req.body;
+        const record = await MedicalHistory.findById(req.params.id);
+        if (!record) return res.status(404).json({ message: 'Record not found' });
+
+        record.amountPaid = amountPaid || record.grandTotal;
+        record.paymentMethod = paymentMethod || 'cash';
+        record.paymentStatus = record.amountPaid >= record.grandTotal ? 'paid'
+            : record.amountPaid > 0 ? 'partial' : 'unpaid';
+        await record.save();
+        res.json({ message: 'Payment updated', record });
+    } catch (e) {
+        res.status(500).json({ message: 'Server error' });
+    }
 });
 
 export default router;

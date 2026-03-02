@@ -4,6 +4,8 @@ import Footer from '../components/Footer';
 import Hero from '../components/Hero';
 import { Microscope, Bed, Shield, FlaskConical, Wifi, Tv, Wind, Activity } from 'lucide-react';
 
+const HERO_IMG = 'https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&w=1920&q=80';
+
 const Facilities = () => {
     useEffect(() => {
         document.title = "Our Facilities | Lifeline Healthcare Global Options - Modern Medical Infrastructure";
@@ -39,7 +41,7 @@ const Facilities = () => {
             <Hero
                 title="World-Class Infrastructure"
                 subtitle="Explore our modern medical facility and professional pharmacy designed for clinical precision and patient comfort."
-                bgImage="/images/banner_two.jpg"
+                bgImage={HERO_IMG}
             />
 
             <section className="section" style={{ padding: '8rem 0' }}>

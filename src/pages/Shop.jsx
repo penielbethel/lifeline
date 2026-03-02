@@ -3,838 +3,634 @@ import axios from 'axios';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import {
-  ShoppingBag,
-  X,
-  Filter,
-  Package,
-  Truck,
-  CreditCard,
-  CheckCircle,
-  Plus,
-  Minus,
-  Trash2,
-  Tag,
-  Search,
-  ChevronRight,
-  TrendingUp,
-  Droplet,
-  Coffee,
-  Store,
-  ArrowRight,
-  Star
+  ShoppingBag, X, Filter, Package, Truck, CreditCard, CheckCircle,
+  Plus, Minus, Trash2, Tag, Search, ChevronRight, Activity,
+  ArrowRight, Star, Shield, Pill, Thermometer, Syringe, Heart
 } from 'lucide-react';
 import { useFlutterwave, closePaymentModal } from 'flutterwave-react-v3';
 
-const PRODUCTS = [
+const CURRENCY = '₦';
+const API_URL = import.meta.env.VITE_API_URL || 'https://lifelineglobaloption.vercel.app/api';
+
+// ─── FALLBACK PRODUCTS (shown while loading or if backend has no products) ───
+const FALLBACK_PRODUCTS = [
   {
-    id: 'kulikuli-small',
-    name: 'Lifeline Kulikuli',
-    category: 'Snacks',
-    tagline: 'Traditional Groundnut Cookies',
-    size: 'Small Pack',
-    description: 'Crunchy, authentic groundnut cookies. Perfectly spiced for a light, healthy snack.',
-    price: 500,
-    image: '/images/Lifeline Kulikuli-S.jpg',
-    rating: 4.8,
-    reviews: 124
+    id: 'paracetamol-500',
+    name: 'Paracetamol 500mg',
+    category: 'Analgesics',
+    tagline: 'Fever & Pain Relief',
+    size: 'Pack of 1000 tabs',
+    description: 'Fast-acting paracetamol for relief of mild to moderate pain and reduction of fever.',
+    price: 2500,
+    image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80',
+    rating: 4.8, reviews: 312, isPrescriptionRequired: false, isNewArrival: false, stockStatus: 'in_stock'
   },
   {
-    id: 'kulikuli-medium',
-    name: 'Lifeline Kulikuli',
-    category: 'Snacks',
-    tagline: 'Traditional Groundnut Cookies',
-    size: 'Family Pack',
-    description: 'Larger pack of our signature crunchy cookies, ideal for sharing with family.',
-    price: 900,
-    image: '/images/Lifeline Kulikuli-M.jpg',
-    rating: 4.9,
-    reviews: 86
+    id: 'amoxicillin-250',
+    name: 'Amoxicillin 250mg',
+    category: 'Antibiotics',
+    tagline: 'Broad Spectrum Antibiotic',
+    size: 'Pack of 30 caps',
+    description: 'Amoxicillin capsules for treatment of bacterial infections. Prescription required.',
+    price: 3800,
+    image: 'https://images.unsplash.com/photo-1471864190281-a93a3070b6de?auto=format&fit=crop&w=400&q=80',
+    rating: 4.7, reviews: 145, isPrescriptionRequired: true, isNewArrival: false, stockStatus: 'in_stock'
   },
   {
-    id: 'kulikuli-regular',
-    name: 'Lifeline Kulikuli',
-    category: 'Snacks',
-    tagline: 'Traditional Groundnut Cookies',
-    size: 'Premium Pack',
-    description: 'The standard premium pack. Carefully packaged to retain that fresh, spicy crunch.',
-    price: 1500,
-    image: '/images/LifelineKulikuli-R.jpg',
-    rating: 5.0,
-    reviews: 215
+    id: 'vitamin-c-1000',
+    name: 'Vitamin C 1000mg',
+    category: 'Supplements',
+    tagline: 'Immunity Booster',
+    size: 'Bottle of 60 tabs',
+    description: 'High-dose Vitamin C effervescent tablets to support immune function and antioxidant protection.',
+    price: 4500,
+    image: 'https://images.unsplash.com/photo-1550831107-1553da8c8464?auto=format&fit=crop&w=400&q=80',
+    rating: 4.9, reviews: 289, isPrescriptionRequired: false, isNewArrival: true, stockStatus: 'in_stock'
   },
   {
-    id: 'emi-kuli-oil',
-    name: 'Lifeline Oils',
-    category: 'Oils',
-    tagline: '100% Pure Groundnut Oil',
-    size: '1 Litre Bottle',
-    description: 'Cholesterol-free, cold-pressed groundnut oil. Perfectly clear and heart-healthy.',
+    id: 'ibuprofen-400',
+    name: 'Ibuprofen 400mg',
+    category: 'Analgesics',
+    tagline: 'Anti-inflammatory & Pain Relief',
+    size: 'Pack of 100 tabs',
+    description: 'Non-steroidal anti-inflammatory drug (NSAID) for pain, inflammation, and fever.',
+    price: 1800,
+    image: 'https://images.unsplash.com/photo-1628771065518-0d82f1938462?auto=format&fit=crop&w=400&q=80',
+    rating: 4.6, reviews: 192, isPrescriptionRequired: false, isNewArrival: false, stockStatus: 'in_stock'
+  },
+  {
+    id: 'metformin-500',
+    name: 'Metformin 500mg',
+    category: 'Chronic Care',
+    tagline: 'Blood Sugar Management',
+    size: 'Pack of 100 tabs',
+    description: 'Oral diabetes medication that helps control blood sugar levels. Requires valid prescription.',
+    price: 6200,
+    image: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?auto=format&fit=crop&w=400&q=80',
+    rating: 4.8, reviews: 78, isPrescriptionRequired: true, isNewArrival: false, stockStatus: 'in_stock'
+  },
+  {
+    id: 'flagyl-400',
+    name: 'Metronidazole 400mg',
+    category: 'Antibiotics',
+    tagline: 'Antiprotozoal & Antibacterial',
+    size: 'Pack of 21 tabs',
+    description: 'Effective against anaerobic bacterial infections and protozoal infections like amoeba.',
+    price: 1200,
+    image: 'https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&w=400&q=80',
+    rating: 4.5, reviews: 223, isPrescriptionRequired: true, isNewArrival: false, stockStatus: 'in_stock'
+  },
+  {
+    id: 'bandage-kit',
+    name: 'First Aid Dressing Kit',
+    category: 'First Aid',
+    tagline: 'Wound Care Essentials',
+    size: 'Complete Kit',
+    description: 'Comprehensive first aid kit with bandages, antiseptic wipes, dressing pads and medical tape.',
     price: 3500,
-    image: '/images/Lifeline Oil1.jpg',
-    rating: 4.9,
-    reviews: 98
+    image: 'https://images.unsplash.com/photo-1603398938378-e54eab446dde?auto=format&fit=crop&w=400&q=80',
+    rating: 4.7, reviews: 156, isPrescriptionRequired: false, isNewArrival: false, stockStatus: 'in_stock'
   },
   {
-    id: 'tigernut-drink',
-    name: 'Lifeline Tigernut',
-    category: 'Drinks',
-    tagline: 'Natural Energy Boost',
-    size: '500ml Bottle',
-    description: 'Creamy, refreshing tigernut drink. Rich in fiber and natural nutrients.',
-    price: 2000,
-    image: '/images/Lifeline Tigernut.jpg',
-    rating: 4.7,
-    reviews: 142
+    id: 'artesunate-inj',
+    name: 'Artesunate Injection',
+    category: 'Injections',
+    tagline: 'Severe Malaria Treatment',
+    size: '60mg/vial',
+    description: 'Injectable artesunate for the treatment of severe malaria. Hospital use only.',
+    price: 8500,
+    image: 'https://images.unsplash.com/photo-1631815588090-d4bfec5b1ccb?auto=format&fit=crop&w=400&q=80',
+    rating: 4.9, reviews: 67, isPrescriptionRequired: true, isNewArrival: true, stockStatus: 'in_stock'
   },
   {
-    id: 'rice',
-    name: 'Lifeline Rice',
-    category: 'Staples',
-    tagline: 'Premium Parboiled Rice',
-    size: '5kg Bag',
-    description: 'Stone-free, long-grain parboiled rice. Polished and ready for your delicious meals.',
-    price: 8000,
-    image: '/images/renee Rice.jpg',
-    rating: 5.0,
-    reviews: 310
+    id: 'omega-3',
+    name: 'Omega-3 Fish Oil',
+    category: 'Supplements',
+    tagline: 'Cardiovascular Support',
+    size: 'Bottle of 90 softgels',
+    description: 'High-quality omega-3 fatty acids from deep-sea fish oil. Supports heart and brain health.',
+    price: 5800,
+    image: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=400&q=80',
+    rating: 4.8, reviews: 334, isPrescriptionRequired: false, isNewArrival: false, stockStatus: 'in_stock'
   },
   {
-    id: 'honey',
-    name: 'Lifeline Honey',
-    category: 'Sweeteners',
-    tagline: '100% Raw Wild Honey',
-    size: '500g Bottle',
-    description: 'Directly from the hive. Unadulterated raw honey with all its natural goodness.',
-    price: 3000,
-    image: '/images/Lifeline Honey.jpg',
-    rating: 4.9,
-    reviews: 167
+    id: 'gloves-box',
+    name: 'Nitrile Exam Gloves',
+    category: 'First Aid',
+    tagline: 'Medical Grade Protection',
+    size: 'Box of 100 (Medium)',
+    description: 'Powder-free nitrile examination gloves. Latex-free and suitable for clinical use.',
+    price: 4200,
+    image: 'https://images.unsplash.com/photo-1584483766114-2cea6facdf57?auto=format&fit=crop&w=400&q=80',
+    rating: 4.6, reviews: 88, isPrescriptionRequired: false, isNewArrival: false, stockStatus: 'in_stock'
   },
+  {
+    id: 'losartan-50',
+    name: 'Losartan 50mg',
+    category: 'Chronic Care',
+    tagline: 'Blood Pressure Management',
+    size: 'Pack of 28 tabs',
+    description: 'Angiotensin II receptor blocker for treating high blood pressure and protecting kidneys.',
+    price: 5500,
+    image: 'https://images.unsplash.com/photo-1548197673-5-fa14b0b5db4?auto=format&fit=crop&w=400&q=80',
+    rating: 4.7, reviews: 92, isPrescriptionRequired: true, isNewArrival: false, stockStatus: 'low_stock'
+  },
+  {
+    id: 'saline-500ml',
+    name: 'Normal Saline 0.9%',
+    category: 'Injections',
+    tagline: 'IV Fluid Therapy',
+    size: '500ml Bag',
+    description: 'Isotonic intravenous fluid for rehydration and drug dilution. Hospital/clinic use.',
+    price: 1500,
+    image: 'https://images.unsplash.com/photo-1559757175-5700dde675bc?auto=format&fit=crop&w=400&q=80',
+    rating: 4.9, reviews: 145, isPrescriptionRequired: true, isNewArrival: false, stockStatus: 'in_stock'
+  }
 ];
 
-const CURRENCY = '₦';
-const API_URL = 'https://lifelineglobaloption.vercel.app/api';
-
-const PromoBanner = ({ promos }) => {
-  const [timeLeft, setTimeLeft] = useState('');
-
-  useEffect(() => {
-    if (!promos || promos.length === 0) return;
-
-    // Find earliest END date for urgency
-    const endDates = promos.map(p => new Date(p.endDate).getTime());
-    const targetDate = Math.min(...endDates);
-
-    const updateTimer = () => {
-      const now = new Date().getTime();
-      const distance = targetDate - now;
-
-      if (distance < 0) {
-        setTimeLeft("Few moments");
-        return;
-      }
-
-      const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-      setTimeLeft(`${days}d ${hours}h ${minutes}m ${seconds}s`);
-    };
-
-    updateTimer();
-    const interval = setInterval(updateTimer, 1000);
-    return () => clearInterval(interval);
-  }, [promos]);
-
-  if (!promos || promos.length === 0) return null;
-
-  // Highest discount
-  const maxDiscount = Math.max(...promos.map(p => p.discountPercent));
-
-  return (
-    <div className="promo-banner-container" style={{
-      background: 'linear-gradient(90deg, #B91C1C 0%, #DC2626 50%, #B91C1C 100%)',
-      color: '#FFFFFF',
-      padding: '12px 20px',
-      textAlign: 'center',
-      position: 'relative',
-      boxShadow: '0 4px 12px rgba(220, 38, 38, 0.3)',
-      marginBottom: '2rem',
-      borderRadius: '8px',
-      animation: 'pulse 2s infinite'
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', flexWrap: 'wrap' }}>
-        <span style={{ fontSize: '1.2rem' }}>🔥</span>
-        <span style={{ fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px' }}>HOT SALE IS LIVE!</span>
-        <span style={{ background: '#FFF', color: '#DC2626', padding: '2px 8px', borderRadius: '4px', fontWeight: 'bold' }}>UP TO {maxDiscount}% OFF</span>
-        <span style={{ fontWeight: '600', opacity: 0.9 }}>Ends in: <span style={{ fontFamily: 'monospace', fontSize: '1.1em' }}>{timeLeft}</span></span>
-      </div>
-    </div>
-  );
-};
-
-/* Product Details Modal Component */
-const ProductDetailsModal = ({ product, similarProducts, onClose, onAddToCart, onProductClick }) => {
+// ─── PRODUCT DETAILS MODAL ───────────────────────────────────────────────────
+const ProductModal = ({ product, onClose, onAddToCart }) => {
   if (!product) return null;
-
+  const isOutOfStock = product.stockStatus === 'out_of_stock';
   return (
     <div style={{
-      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 2000,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      backdropFilter: 'blur(5px)', padding: '1rem'
+      position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)',
+      zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center',
+      backdropFilter: 'blur(6px)', padding: '1rem'
     }} onClick={onClose}>
       <div style={{
-        backgroundColor: '#FFF', width: '100%', maxWidth: '900px',
-        borderRadius: '16px', overflow: 'hidden', display: 'flex', flexDirection: 'column',
-        maxHeight: '90vh', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+        backgroundColor: '#fff', width: '100%', maxWidth: '820px', borderRadius: '24px',
+        overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '90vh',
+        boxShadow: '0 25px 60px rgba(0,0,0,0.25)'
       }} onClick={e => e.stopPropagation()}>
-
-        <div style={{ padding: '1.5rem', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'flex-end' }}>
-          <button onClick={onClose} style={{ padding: '0.5rem', borderRadius: '50%', border: 'none', cursor: 'pointer', background: '#f3f4f6' }}>
-            <X size={24} color="#374151" />
+        {/* Close */}
+        <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #F1F5F9', display: 'flex', justifyContent: 'flex-end' }}>
+          <button onClick={onClose} style={{ width: '36px', height: '36px', borderRadius: '50%', border: 'none', background: '#F1F5F9', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <X size={18} color="#374151" />
           </button>
         </div>
-
         <div style={{ overflowY: 'auto', padding: '2rem' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '3rem', marginBottom: '4rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2.5rem' }}>
             {/* Image */}
-            <div>
-              <img src={product.image} alt={product.name} style={{ width: '100%', borderRadius: '12px', objectFit: 'cover' }} />
+            <div style={{ borderRadius: '16px', overflow: 'hidden', background: '#F8FAFC', height: '300px' }}>
+              <img src={product.image} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
-
-            {/* Details */}
+            {/* Info */}
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-                <span style={{ padding: '0.25rem 0.75rem', backgroundColor: '#1A1A1A', color: '#D4AF37', borderRadius: '50px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>
-                  {product.category}
-                </span>
-                {product.isNewArrival && (
-                  <span style={{ padding: '0.25rem 0.75rem', backgroundColor: '#10B981', color: '#FFF', borderRadius: '50px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>
-                    New Arrival
-                  </span>
-                )}
+              <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+                <span style={{ padding: '0.3rem 0.9rem', backgroundColor: '#EFF6FF', color: '#1D4ED8', borderRadius: '999px', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase' }}>{product.category}</span>
+                {product.isNewArrival && <span style={{ padding: '0.3rem 0.9rem', backgroundColor: '#ECFDF5', color: '#059669', borderRadius: '999px', fontSize: '0.75rem', fontWeight: '800' }}>New Arrival</span>}
+                {product.isPrescriptionRequired && <span style={{ padding: '0.3rem 0.9rem', backgroundColor: '#FEF2F2', color: '#DC2626', borderRadius: '999px', fontSize: '0.75rem', fontWeight: '800' }}>Rx Required</span>}
               </div>
-
-              <h2 style={{ fontSize: '2.5rem', fontWeight: '800', lineHeight: 1.1, marginBottom: '0.5rem', color: '#111827' }}>
-                {product.name}
-              </h2>
-              <p style={{ fontSize: '1.25rem', color: '#6B7280', marginBottom: '2rem' }}>
-                {product.tagline}
-              </p>
-
-              <div style={{ fontSize: '1.1rem', lineHeight: 1.6, color: '#4B5563', marginBottom: '2rem' }}>
-                {product.description}
+              <h2 style={{ fontSize: '2rem', fontWeight: '800', color: '#0F172A', marginBottom: '0.5rem' }}>{product.name}</h2>
+              <p style={{ color: '#0F766E', fontWeight: '600', marginBottom: '1rem' }}>{product.tagline}</p>
+              <p style={{ color: '#475569', lineHeight: '1.7', marginBottom: '1.5rem' }}>{product.description}</p>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                <span style={{ fontSize: '2.25rem', fontWeight: '900', color: '#1D4ED8' }}>₦{product.price.toLocaleString()}</span>
+                <span style={{ color: '#94A3B8' }}>/ {product.size}</span>
               </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', marginBottom: '1.5rem' }}>
-                <span style={{ fontSize: '2rem', fontWeight: '800', color: '#059669' }}>
-                  ₦{product.price.toLocaleString()}
-                </span>
-                <span style={{ fontSize: '1.1rem', color: '#6B7280' }}>
-                  / {product.size}
-                </span>
-              </div>
-
               {product.isPrescriptionRequired && (
-                <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', padding: '1rem', borderRadius: '8px', marginBottom: '2rem', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                  <div style={{ background: '#DC2626', color: '#fff', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold' }}>Rx</div>
-                  <p style={{ fontSize: '0.9rem', color: '#991B1B', margin: 0 }}>This is a **Prescription-Only** medication. You will be required to present a valid doctor's prescription upon delivery or pickup.</p>
+                <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', padding: '1rem', borderRadius: '10px', marginBottom: '1.25rem', display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
+                  <Shield size={18} color="#DC2626" style={{ flexShrink: 0, marginTop: '2px' }} />
+                  <p style={{ fontSize: '0.875rem', color: '#991B1B', margin: 0, lineHeight: '1.5' }}>This medication requires a valid doctor's prescription. Please have it ready upon pickup or delivery.</p>
                 </div>
               )}
-
-              <button
-                onClick={() => { onAddToCart(product); onClose(); }}
-                style={{
-                  width: '100%', padding: '1rem 2rem', backgroundColor: product.isPrescriptionRequired ? '#DC2626' : '#059669', color: '#FFF',
-                  border: 'none', borderRadius: '8px', fontSize: '1.1rem', fontWeight: '700', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem',
-                  transition: 'transform 0.2s', boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-                }}
-              >
-                {product.isPrescriptionRequired ? <CheckCircle size={24} /> : <Plus size={24} />}
-                {product.isPrescriptionRequired ? 'Add to Prescription Cart' : 'Add to Pharma Basket'}
+              <button onClick={() => { onAddToCart(product); onClose(); }} disabled={isOutOfStock}
+                style={{ width: '100%', padding: '1rem', background: isOutOfStock ? '#E5E7EB' : 'linear-gradient(135deg, #1D4ED8, #3B82F6)', color: isOutOfStock ? '#9CA3AF' : '#fff', border: 'none', borderRadius: '12px', fontSize: '1rem', fontWeight: '800', cursor: isOutOfStock ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}>
+                {isOutOfStock ? 'Out of Stock' : <><Plus size={20} /> Add to Basket</>}
               </button>
             </div>
           </div>
-
-          {/* Similar Products */}
-          {similarProducts.length > 0 && (
-            <div style={{ borderTop: '1px solid #eee', paddingTop: '3rem' }}>
-              <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '1.5rem', color: '#111827' }}>
-                You Might Also Like
-              </h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1.5rem' }}>
-                {similarProducts.map(p => (
-                  <div key={p.id}
-                    onClick={() => onProductClick(p)}
-                    style={{ cursor: 'pointer', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e5e7eb', transition: 'transform 0.2s' }}
-                    onMouseOver={e => e.currentTarget.style.transform = 'translateY(-4px)'}
-                    onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
-                  >
-                    <div style={{ height: '150px', overflow: 'hidden' }}>
-                      <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    </div>
-                    <div style={{ padding: '1rem' }}>
-                      <h4 style={{ fontWeight: '700', marginBottom: '0.25rem', color: '#111827' }}>{p.name}</h4>
-                      <p style={{ color: '#D4AF37', fontWeight: '700' }}>₦{p.price.toLocaleString()}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>
   );
 };
 
+// ─── PROMO BANNER ─────────────────────────────────────────────────────────────
+const PromoBanner = ({ promos }) => {
+  const [timeLeft, setTimeLeft] = useState('');
+  useEffect(() => {
+    if (!promos || promos.length === 0) return;
+    const endDates = promos.map(p => new Date(p.endDate).getTime());
+    const targetDate = Math.min(...endDates);
+    const updateTimer = () => {
+      const distance = targetDate - Date.now();
+      if (distance < 0) { setTimeLeft('Ended'); return; }
+      const d = Math.floor(distance / 86400000);
+      const h = Math.floor((distance % 86400000) / 3600000);
+      const m = Math.floor((distance % 3600000) / 60000);
+      const s = Math.floor((distance % 60000) / 1000);
+      setTimeLeft(`${d}d ${h}h ${m}m ${s}s`);
+    };
+    updateTimer();
+    const iv = setInterval(updateTimer, 1000);
+    return () => clearInterval(iv);
+  }, [promos]);
+  if (!promos || promos.length === 0) return null;
+  const max = Math.max(...promos.map(p => p.discountPercent));
+  return (
+    <div style={{ background: 'linear-gradient(90deg, #1D4ED8, #3B82F6)', color: '#fff', padding: '0.85rem 1.5rem', borderRadius: '12px', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+      <span style={{ fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px' }}>🏥 Active Promotion</span>
+      <span style={{ background: '#fff', color: '#1D4ED8', padding: '0.2rem 0.75rem', borderRadius: '6px', fontWeight: '800', fontSize: '0.9rem' }}>UP TO {max}% OFF</span>
+      {timeLeft && <span style={{ opacity: 0.85 }}>Ends in: <strong style={{ fontFamily: 'monospace' }}>{timeLeft}</strong></span>}
+    </div>
+  );
+};
+
+// ─── MAIN SHOP COMPONENT ─────────────────────────────────────────────────────
 const Shop = () => {
   const [cart, setCart] = useState(() => {
-    const saved = localStorage.getItem('renee_cart');
-    return saved ? JSON.parse(saved) : [];
+    try { return JSON.parse(localStorage.getItem('lifeline_cart') || '[]'); }
+    catch { return []; }
   });
   const [products, setProducts] = useState([]);
   const [activePromos, setActivePromos] = useState([]);
-  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [filter, setFilter] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [viewingProduct, setViewingProduct] = useState(null);
+  const [pendingOrderId, setPendingOrderId] = useState(null);
+  const [orderStatus, setOrderStatus] = useState(null);
+  const [couponCode, setCouponCode] = useState('');
+  const [activeCoupon, setActiveCoupon] = useState(null);
+  const [couponMessage, setCouponMessage] = useState({ type: '', text: '' });
+  const [checkoutForm, setCheckoutForm] = useState({
+    fullName: '', email: '', phone: '', address: '', state: ''
+  });
 
-  // Fetch products and active promos
+  // Fetch data
   useEffect(() => {
-    document.title = "Pharmacy | Lifeline Healthcare Global Options - Genuine Medications & Wellness Essentials";
+    document.title = "Lifeline Pharmacy — Genuine Medications Delivered";
     const fetchData = async () => {
       try {
         const [prodRes, promoRes] = await Promise.all([
           axios.get(`${API_URL}/products`),
           axios.get(`${API_URL}/promos/active`)
         ]);
-        setProducts(prodRes.data);
-        setActivePromos(promoRes.data);
-      } catch (error) {
-        console.error('Error fetching data:', error);
+        const fetchedProducts = prodRes.data && prodRes.data.length > 0 ? prodRes.data : FALLBACK_PRODUCTS;
+        setProducts(fetchedProducts);
+        setActivePromos(promoRes.data || []);
+      } catch {
+        // Backend unavailable — use fallback products
+        setProducts(FALLBACK_PRODUCTS);
+        setLoadError(true);
       } finally {
-        setIsLoadingProducts(false);
+        setIsLoading(false);
       }
     };
     fetchData();
   }, []);
 
+  // Persist cart
   useEffect(() => {
-    localStorage.setItem('renee_cart', JSON.stringify(cart));
+    localStorage.setItem('lifeline_cart', JSON.stringify(cart));
   }, [cart]);
 
-  const [filter, setFilter] = useState('All');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [checkoutForm, setCheckoutForm] = useState({
-    fullName: '',
-    email: '',
-    phone: '',
-    address: '',
-    state: '',
-    paymentMethod: 'transfer',
-  });
-  const [orderStatus, setOrderStatus] = useState(null); // 'success', 'error', null
-  const [couponCode, setCouponCode] = useState('');
-  const [activeCoupon, setActiveCoupon] = useState(null);
-  const [couponMessage, setCouponMessage] = useState({ type: '', text: '' });
-  const [viewingProduct, setViewingProduct] = useState(null);
-  const [pendingOrderId, setPendingOrderId] = useState(null);
-
-
-
+  // Filter products
   const filteredProducts = useMemo(() => {
-    const results = products.filter((product) => {
-      const matchesFilter = filter === 'All' ||
-        (filter === 'Supplements' ? product.category === 'Supplements' : product.category === filter);
-      const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.description.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesFilter && matchesSearch;
-    });
+    return products
+      .filter(p => {
+        const matchCat = filter === 'All' || p.category === filter;
+        const matchSearch = !searchQuery ||
+          p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          p.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          p.category?.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchCat && matchSearch;
+      })
+      .sort((a, b) => (b.isNewArrival ? 1 : 0) - (a.isNewArrival ? 1 : 0));
+  }, [products, filter, searchQuery]);
 
-    // Sort by New Arrival (true comes first)
-    return results.sort((a, b) => {
-      if (a.isNewArrival && !b.isNewArrival) return -1;
-      if (!a.isNewArrival && b.isNewArrival) return 1;
-      return 0; // Maintain original order otherwise
-    });
-  }, [filter, searchQuery, products]);
-
-  const getProductPrice = (product) => {
+  // Get effective price with promos
+  const getPrice = (product) => {
     const applicable = activePromos.filter(p =>
-      p.applicableProducts.length === 0 || p.applicableProducts.includes(product.id)
+      p.applicableProducts?.length === 0 || p.applicableProducts?.includes(product.id)
     );
-
-    if (applicable.length === 0) return { original: product.price, current: product.price, isPromo: false };
-
-    // Sort by best discount
+    if (!applicable.length) return { original: product.price, current: product.price, isPromo: false };
     applicable.sort((a, b) => b.discountPercent - a.discountPercent);
-    const bestPromo = applicable[0];
-    const discount = (product.price * bestPromo.discountPercent) / 100;
-
-    return {
-      original: product.price,
-      current: product.price - discount,
-      discountPercent: bestPromo.discountPercent,
-      isPromo: true
-    };
+    const best = applicable[0];
+    const discount = Math.round((product.price * best.discountPercent) / 100);
+    return { original: product.price, current: product.price - discount, discountPercent: best.discountPercent, isPromo: true };
   };
 
+  // Cart totals
   const cartTotals = useMemo(() => {
-    const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const subtotal = cart.reduce((s, i) => s + i.price * i.quantity, 0);
     const delivery = cart.length > 0 ? 1500 : 0;
-
     let discount = 0;
     if (activeCoupon) {
-      if (activeCoupon.applicableProducts.length > 0) {
-        // Discount only on specific products
-        const discountableAmount = cart.reduce((sum, item) => {
-          if (activeCoupon.applicableProducts.includes(item.id)) {
-            return sum + (item.price * item.quantity);
-          }
-          return sum;
-        }, 0);
-        discount = (discountableAmount * activeCoupon.discountPercent) / 100;
+      if (activeCoupon.applicableProducts?.length > 0) {
+        const base = cart.reduce((s, i) => activeCoupon.applicableProducts.includes(i.id) ? s + i.price * i.quantity : s, 0);
+        discount = Math.round((base * activeCoupon.discountPercent) / 100);
       } else {
-        // Discount on entire subtotal
-        discount = (subtotal * activeCoupon.discountPercent) / 100;
+        discount = Math.round((subtotal * activeCoupon.discountPercent) / 100);
       }
     }
-
     const total = Math.max(0, subtotal + delivery - discount);
     return { subtotal, delivery, discount, total };
   }, [cart, activeCoupon]);
 
-  const flutterwaveConfig = useMemo(() => ({
+  // Flutterwave config
+  const flwConfig = useMemo(() => ({
     public_key: 'FLWPUBK_TEST-1f887ca9f241fd06e18bb705c9ae73c9-X',
-    tx_ref: pendingOrderId || `temp-ref`,
+    tx_ref: pendingOrderId || 'temp',
     amount: cartTotals.total,
     currency: 'NGN',
     payment_options: 'card,mobilemoney,ussd',
-    customer: {
-      email: checkoutForm.email,
-      phone_number: checkoutForm.phone,
-      name: checkoutForm.fullName,
-    },
+    customer: { email: checkoutForm.email, phone_number: checkoutForm.phone, name: checkoutForm.fullName },
     customizations: {
-      title: 'Lifeline Shop',
-      description: `Payment for ${cart.length} items`,
-      logo: 'https://cdn-icons-png.flaticon.com/512/3081/3081559.png',
-    },
-  }), [pendingOrderId, cartTotals, checkoutForm, cart.length]);
+      title: 'Lifeline Pharmacy',
+      description: `Order for ${cart.length} items`,
+      logo: 'https://images.unsplash.com/photo-1585435557343-3b092031a831?w=100&q=80'
+    }
+  }), [pendingOrderId, cartTotals.total, checkoutForm, cart.length]);
 
-  const handleFlutterwavePayment = useFlutterwave(flutterwaveConfig);
+  const handleFlutterwavePayment = useFlutterwave(flwConfig);
 
   useEffect(() => {
-    if (pendingOrderId) {
-      handleFlutterwavePayment({
-        callback: (response) => {
-          closePaymentModal();
-          if (response.status === "successful") {
-            // Verify
-            axios.post(`${API_URL}/payment/verify`, {
-              transaction_id: response.transaction_id,
-              order_id: pendingOrderId
+    if (!pendingOrderId) return;
+    handleFlutterwavePayment({
+      callback: (response) => {
+        closePaymentModal();
+        if (response.status === 'successful') {
+          axios.post(`${API_URL}/payment/verify`, { transaction_id: response.transaction_id, order_id: pendingOrderId })
+            .then(res => {
+              if (res.data.status === 'success') {
+                setOrderStatus('success');
+                clearCart();
+                setTimeout(() => { setOrderStatus(null); setPendingOrderId(null); }, 6000);
+              } else { alert('Payment verification failed. Contact support.'); }
             })
-              .then(res => {
-                if (res.data.status === 'success') {
-                  setOrderStatus('success');
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                  clearCart();
-                  setTimeout(() => {
-                    setOrderStatus(null);
-                    setPendingOrderId(null);
-                    setCheckoutForm({ fullName: '', email: '', phone: '', address: '', state: '', paymentMethod: 'transfer' });
-                  }, 5000);
-                } else {
-                  alert('Payment verification failed. Please contact support.');
-                }
-              })
-              .catch(err => {
-                console.error(err);
-                alert('Error verifying payment.');
-              });
-          }
-        },
-        onClose: () => {
-          setPendingOrderId(null);
-        },
-      });
-    }
-  }, [pendingOrderId, handleFlutterwavePayment]);
+            .catch(() => alert('Error verifying payment. Please contact support.'));
+        }
+      },
+      onClose: () => setPendingOrderId(null)
+    });
+  }, [pendingOrderId]);
 
+  // Cart operations
   const addToCart = (product) => {
-    setCart((prev) => {
-      const existing = prev.find((item) => item.id === product.id);
-      if (existing) {
-        return prev.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
-        );
-      }
+    setCart(prev => {
+      const ex = prev.find(i => i.id === product.id);
+      if (ex) return prev.map(i => i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i);
       return [...prev, { ...product, quantity: 1 }];
     });
   };
-
-  const updateQuantity = (id, quantity) => {
-    if (quantity <= 0) {
-      setCart((prev) => prev.filter((item) => item.id !== id));
-      return;
-    }
-    setCart((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, quantity } : item))
-    );
+  const updateQty = (id, q) => {
+    if (q <= 0) { setCart(prev => prev.filter(i => i.id !== id)); return; }
+    setCart(prev => prev.map(i => i.id === id ? { ...i, quantity: q } : i));
   };
-
-  const removeFromCart = (id) => {
-    setCart((prev) => prev.filter((item) => item.id !== id));
-  };
-
-  const clearCart = () => {
-    setCart([]);
-    setActiveCoupon(null);
-    setCouponCode('');
-    setCouponMessage({ type: '', text: '' });
-  };
+  const removeItem = (id) => setCart(prev => prev.filter(i => i.id !== id));
+  const clearCart = () => { setCart([]); setActiveCoupon(null); setCouponCode(''); setCouponMessage({ type: '', text: '' }); };
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return;
-
     setCouponMessage({ type: 'loading', text: 'Verifying...' });
-
     try {
-      const response = await axios.post(`${API_URL}/coupons/validate`, {
-        code: couponCode,
-        email: checkoutForm.email,
-        productIds: cart.map(item => item.id)
+      const res = await axios.post(`${API_URL}/coupons/validate`, {
+        code: couponCode, email: checkoutForm.email, productIds: cart.map(i => i.id)
       });
-
-      const { valid, discountPercent, applicableProducts, message } = response.data;
-
-      if (valid) {
-        setActiveCoupon({ code: couponCode, discountPercent, applicableProducts });
-        setCouponMessage({ type: 'success', text: message });
+      if (res.data.valid) {
+        setActiveCoupon({ code: couponCode, discountPercent: res.data.discountPercent, applicableProducts: res.data.applicableProducts });
+        setCouponMessage({ type: 'success', text: res.data.message });
       } else {
         setActiveCoupon(null);
-        setCouponMessage({ type: 'error', text: message });
+        setCouponMessage({ type: 'error', text: res.data.message });
       }
-    } catch (error) {
-      console.error('Coupon error:', error);
+    } catch (err) {
       setActiveCoupon(null);
-      setCouponMessage({ type: 'error', text: error.response?.data?.message || 'Invalid coupon' });
+      setCouponMessage({ type: 'error', text: err.response?.data?.message || 'Invalid coupon code' });
     }
-  };
-
-  const handleFormChange = (e) => {
-    const { name, value } = e.target;
-    setCheckoutForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
-    if (cart.length === 0) {
-      alert('Please add at least one product to your cart.');
-      return;
+    if (cart.length === 0) { alert('Your basket is empty.'); return; }
+    if (!checkoutForm.fullName || !checkoutForm.email || !checkoutForm.phone || !checkoutForm.address) {
+      alert('Please fill in all delivery details.'); return;
     }
-    if (!checkoutForm.fullName || !checkoutForm.phone || !checkoutForm.address || !checkoutForm.email) {
-      alert('Please fill in your shipping details including email.');
-      return;
-    }
-
     try {
-      const orderNumber = `RENEE-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-
-      const orderData = {
+      const orderNumber = `LPH-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      await axios.post(`${API_URL}/orders`, {
         orderNumber,
         customerName: checkoutForm.fullName,
         customerEmail: checkoutForm.email,
         customerPhone: checkoutForm.phone,
-        items: cart.map(item => ({
-          productName: item.name,
-          quantity: item.quantity,
-          price: item.price
-        })),
+        items: cart.map(i => ({ productName: i.name, quantity: i.quantity, price: i.price })),
         totalAmount: cartTotals.total,
-        couponCode: activeCoupon ? activeCoupon.code : undefined,
-        discountAmount: activeCoupon ? cartTotals.discount : 0,
+        couponCode: activeCoupon?.code,
+        discountAmount: cartTotals.discount,
         status: 'pending',
         paymentStatus: 'unpaid'
-      };
-
-      await axios.post(`${API_URL}/orders`, orderData);
-
-      // Order Created. Open Flutterwave.
+      });
       setPendingOrderId(orderNumber);
-
-    } catch (error) {
-      console.error('Order error:', error);
-      alert('Failed to place order. ' + (error.response?.data?.message || 'Please try again.'));
+    } catch (err) {
+      alert('Failed to place order. ' + (err.response?.data?.message || 'Please try again.'));
     }
   };
 
+  // Categories with icons
+  const CATEGORIES = [
+    { id: 'All', label: 'All Products', icon: <Package size={15} /> },
+    { id: 'Analgesics', label: 'Pain Relief', icon: <Thermometer size={15} /> },
+    { id: 'Antibiotics', label: 'Antibiotics', icon: <Shield size={15} /> },
+    { id: 'Supplements', label: 'Supplements', icon: <Heart size={15} /> },
+    { id: 'Injections', label: 'Injections', icon: <Syringe size={15} /> },
+    { id: 'First Aid', label: 'First Aid', icon: <Plus size={15} /> },
+    { id: 'Chronic Care', label: 'Chronic Care', icon: <Activity size={15} /> },
+  ];
+
+  const cartCount = cart.reduce((s, i) => s + i.quantity, 0);
+
   return (
-    <div className="shop-page">
+    <div style={{ backgroundColor: '#F8FAFC', minHeight: '100vh' }}>
       <Navbar />
 
-      {/* Stunning Shop Hero */}
-      <section className="shop-hero" style={{ background: 'linear-gradient(135deg, #065F46 0%, #047857 100%)' }}>
-        <div className="shop-hero-bg"></div>
-        <div className="container relative z-10">
-          <div className="flex flex-col items-center text-center py-12">
-            <div className="shop-pill flex items-center gap-2 mb-4" style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: '#D1FAE5', padding: '0.5rem 1rem', borderRadius: '50px', fontSize: '0.9rem', fontWeight: 'bold' }}>
-              <Activity size={16} />
-              <span>Certified Online Pharmacy • Quality Guaranteed</span>
+      {/* HERO */}
+      <section className="shop-hero" style={{ paddingTop: '9rem', paddingBottom: '5rem' }}>
+        <div className="shop-hero-bg" />
+        <div className="container" style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{ textAlign: 'center' }}>
+            <div className="shop-pill" style={{ marginBottom: '1.5rem', display: 'inline-flex' }}>
+              <Pill size={14} style={{ marginRight: '0.5rem' }} />
+              NAFDAC Certified • Genuine Medications Only
             </div>
-            <h1 className="shop-title animate-fade-in-up" style={{ fontSize: '3.5rem', fontWeight: '800', color: '#FFF' }}>The Lifeline Pharmacy</h1>
-            <p className="shop-subtitle animate-fade-in-up" style={{ animationDelay: '0.1s', color: '#D1FAE5', fontSize: '1.2rem', maxWidth: '600px', margin: '1.5rem auto 0' }}>
-              Get genuine medications, supplements, and wellness essentials.
-              Prescriptions processed accurately and delivered safely to your doorstep.
+            <h1 className="shop-title">Lifeline Pharmacy</h1>
+            <p className="shop-subtitle" style={{ margin: '1rem auto 0' }}>
+              Browse certified medications, supplements & wellness products.
+              Prescriptions handled safely. Nationwide delivery available.
             </p>
-
-            <div className="shop-search-bar animate-fade-in-up mt-8" style={{ animationDelay: '0.2s', width: '100%', maxWidth: '500px' }}>
-              <Search className="search-icon" size={20} />
+            <div className="shop-search-bar" style={{ margin: '2rem auto 0' }}>
+              <Search className="search-icon" size={18} />
               <input
                 type="text"
-                placeholder="Search products (Paracetamol, Antibiotics, Vitamins...)"
+                placeholder="Search medications, supplements, categories..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={e => setSearchQuery(e.target.value)}
               />
             </div>
           </div>
         </div>
       </section>
 
-      <section className="section bg-light-gray-alt">
+      {/* MAIN CONTENT */}
+      <section style={{ padding: '3rem 0 6rem' }}>
         <div className="container">
 
+          {/* Order Success */}
           {orderStatus === 'success' && (
-            <div className="order-success-banner animate-fade-in mb-8">
-              <div className="flex items-center gap-4">
-                <div className="success-icon">
-                  <CheckCircle size={32} />
-                </div>
-                <div>
-                  <h3>Order Received Successfully!</h3>
-                  <p>Thank you for shopping with Lifeline. An agent will contact you shortly at {checkoutForm.phone} with payment instructions.</p>
-                </div>
+            <div className="order-success-banner animate-fade-in" style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+              <div className="success-icon"><CheckCircle size={28} /></div>
+              <div>
+                <h3 style={{ margin: 0, marginBottom: '0.25rem' }}>Order Placed Successfully!</h3>
+                <p style={{ margin: 0, fontSize: '0.9rem' }}>Your medications are being processed. Our team will contact you at <strong>{checkoutForm.phone}</strong>.</p>
               </div>
             </div>
           )}
 
-          <div className="shop-layout">
-            {/* Main Shop Area */}
-            <main className="shop-main">
+          {/* Backend Warning */}
+          {loadError && (
+            <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', padding: '1rem 1.5rem', borderRadius: '12px', marginBottom: '1.5rem', color: '#1D4ED8', fontSize: '0.875rem' }}>
+              <strong>Note:</strong> Showing sample catalog — backend may be offline. Products are for reference.
+            </div>
+          )}
 
+          <div className="shop-layout">
+            {/* PRODUCTS MAIN AREA */}
+            <main>
               {/* Promo Banner */}
               <PromoBanner promos={activePromos} />
 
-              {/* Category Filter Pills */}
-              <div className="shop-filters-container flex items-center gap-4 mb-8 overflow-x-auto pb-4">
-                <div className="flex items-center gap-2 text-dark font-semibold mr-4">
-                  <Filter size={18} />
-                  <span>Filter:</span>
+              {/* Filters */}
+              <div className="shop-filters-container" style={{ marginBottom: '1.75rem', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#475569', fontWeight: '600', fontSize: '0.875rem', flexShrink: 0 }}>
+                  <Filter size={16} /> Filter:
                 </div>
-                {[
-                  { id: 'All', label: 'All Items', icon: <Package size={16} /> },
-                  { id: 'Analgesics', label: 'Pain Relief', icon: <Activity size={16} /> },
-                  { id: 'Antibiotics', label: 'Antibiotics', icon: <Shield size={16} /> },
-                  { id: 'Supplements', label: 'Vitamins & Supp', icon: <Star size={16} /> },
-                  { id: 'Injections', label: 'Injections', icon: <Plus size={16} /> },
-                  { id: 'First Aid', label: 'First Aid', icon: <CheckCircle size={16} /> }
-                ].map((item) => (
+                {CATEGORIES.map(cat => (
                   <button
-                    key={item.id}
-                    className={`filter-pill ${filter === item.id ? 'active' : ''}`}
-                    onClick={() => setFilter(item.id)}
+                    key={cat.id}
+                    className={`filter-pill ${filter === cat.id ? 'active' : ''}`}
+                    onClick={() => setFilter(cat.id)}
                   >
-                    {item.icon}
-                    {item.label}
+                    {cat.icon} {cat.label}
                   </button>
                 ))}
               </div>
 
-              {/* Shop Highlights / Features */}
-              <div className="shop-features grid grid-cols-3 gap-4 mb-12">
+              {/* Feature Highlights */}
+              <div className="shop-features grid grid-cols-3" style={{ gap: '1rem', marginBottom: '2rem' }}>
                 <div className="shop-feature-card">
-                  <div className="f-icon-box"><Truck size={24} /></div>
-                  <div>
-                    <h4>Med-Delivery</h4>
-                    <p>Subsidized & Secure</p>
-                  </div>
+                  <div className="f-icon-box"><Truck size={22} /></div>
+                  <div><h4>Nationwide Delivery</h4><p>Tracked & subsidized</p></div>
                 </div>
                 <div className="shop-feature-card">
-                  <div className="f-icon-box"><CreditCard size={24} /></div>
-                  <div>
-                    <h4>Safe Checkout</h4>
-                    <p>Online or Bank Transfer</p>
-                  </div>
+                  <div className="f-icon-box"><Shield size={22} /></div>
+                  <div><h4>NAFDAC Certified</h4><p>100% genuine drugs</p></div>
                 </div>
                 <div className="shop-feature-card">
-                  <div className="f-icon-box"><CheckCircle size={24} /></div>
-                  <div>
-                    <h4>NAFDAC Certified</h4>
-                    <p>100% Genuine Drugs</p>
-                  </div>
+                  <div className="f-icon-box"><CreditCard size={22} /></div>
+                  <div><h4>Secure Payment</h4><p>Card or bank transfer</p></div>
                 </div>
+              </div>
+
+              {/* Count */}
+              <div style={{ marginBottom: '1.25rem', color: '#64748B', fontSize: '0.875rem' }}>
+                Showing <strong style={{ color: '#1E293B' }}>{filteredProducts.length}</strong> product{filteredProducts.length !== 1 ? 's' : ''}
+                {filter !== 'All' && <> in <strong style={{ color: '#1D4ED8' }}>{filter}</strong></>}
+                {searchQuery && <> matching "<strong>{searchQuery}</strong>"</>}
               </div>
 
               {/* Products Grid */}
               <div className="shop-grid">
-                {isLoadingProducts ? (
-                  <div style={{
-                    gridColumn: '1 / -1',
-                    textAlign: 'center',
-                    padding: '4rem 0',
-                    color: '#D4AF37',
-                    fontSize: '1.2rem',
-                    fontWeight: '600'
-                  }}>
-                    Loading products...
-                  </div>
+                {isLoading ? (
+                  Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} style={{ borderRadius: '20px', background: '#F1F5F9', height: '340px', animation: 'pulse 1.5s ease infinite' }} />
+                  ))
                 ) : filteredProducts.length > 0 ? (
-                  filteredProducts.map((product) => {
-                    const { original, current, isPromo, discountPercent } = getProductPrice(product);
-
-                    // New Arrival Logic: Manual Flag Only
+                  filteredProducts.map(product => {
+                    const { original, current, isPromo, discountPercent } = getPrice(product);
+                    const isOut = product.stockStatus === 'out_of_stock';
+                    const isLow = product.stockStatus === 'low_stock';
                     const isNew = product.isNewArrival;
-                    const isOutOfStock = product.stockStatus === 'out_of_stock';
-                    const isLowStock = product.stockStatus === 'low_stock';
 
                     return (
-                      <div key={product.id} className="modern-product-card animate-fade-in-up" style={{ opacity: isOutOfStock ? 0.8 : 1 }}>
-                        <div className="product-image-wrapper" style={{ position: 'relative' }}>
+                      <div key={product.id} className="modern-product-card animate-fade-in-up" style={{ opacity: isOut ? 0.75 : 1 }}>
+                        <div className="product-image-wrapper">
                           <img
                             src={product.image}
                             alt={product.name}
-                            style={{ filter: isOutOfStock ? 'grayscale(100%)' : 'none', transition: 'filter 0.3s ease', cursor: 'pointer' }}
+                            style={{ filter: isOut ? 'grayscale(80%)' : 'none', cursor: 'pointer' }}
                             onClick={() => setViewingProduct(product)}
+                            onError={e => { e.target.src = 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400&q=80'; }}
                           />
 
-                          {/* Badges (Top Left) */}
-                          <div style={{ position: 'absolute', top: '10px', left: '10px', display: 'flex', flexDirection: 'column', gap: '6px', zIndex: 10 }}>
-                            <div className="product-badge" style={{ position: 'static', marginBottom: 0 }}>{product.category}</div>
-                            {isNew && !isOutOfStock && (
-                              <div style={{
-                                backgroundColor: '#10B981', color: '#FFF',
-                                padding: '4px 8px', borderRadius: '4px',
-                                fontSize: '11px', fontWeight: '800', textTransform: 'uppercase',
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)', textAlign: 'center'
-                              }}>
-                                New
-                              </div>
-                            )}
-                            {product.isPrescriptionRequired && !isOutOfStock && (
-                              <div style={{
-                                backgroundColor: '#DC2626', color: '#FFF',
-                                padding: '4px 8px', borderRadius: '4px',
-                                fontSize: '11px', fontWeight: '800', textTransform: 'uppercase',
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)', textAlign: 'center',
-                                display: 'flex', alignItems: 'center', gap: '2px'
-                              }}>
-                                <span>Rx</span> Required
-                              </div>
-                            )}
-                            {isLowStock && !isOutOfStock && (
-                              <div style={{
-                                backgroundColor: '#F59E0B', color: '#FFF',
-                                padding: '4px 8px', borderRadius: '4px',
-                                fontSize: '11px', fontWeight: '800', textTransform: 'uppercase',
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)', textAlign: 'center'
-                              }}>
-                                Low Stock
-                              </div>
-                            )}
+                          {/* Top-left badges */}
+                          <div style={{ position: 'absolute', top: '10px', left: '10px', display: 'flex', flexDirection: 'column', gap: '5px', zIndex: 5 }}>
+                            <span className="product-badge">{product.category}</span>
+                            {isNew && !isOut && <span style={{ padding: '3px 8px', borderRadius: '999px', background: '#059669', color: '#fff', fontSize: '0.65rem', fontWeight: '800', textTransform: 'uppercase', textAlign: 'center' }}>NEW</span>}
+                            {product.isPrescriptionRequired && !isOut && <span style={{ padding: '3px 8px', borderRadius: '999px', background: '#DC2626', color: '#fff', fontSize: '0.65rem', fontWeight: '800', textAlign: 'center' }}>Rx REQ.</span>}
+                            {isLow && !isOut && <span style={{ padding: '3px 8px', borderRadius: '999px', background: '#D97706', color: '#fff', fontSize: '0.65rem', fontWeight: '800', textAlign: 'center' }}>LOW STOCK</span>}
                           </div>
 
-                          {/* Promo Badge (Top Right) */}
-                          {isPromo && !isOutOfStock && (
-                            <div style={{
-                              position: 'absolute', top: '10px', right: '10px',
-                              backgroundColor: '#DC2626', color: '#FFF',
-                              padding: '4px 8px', borderRadius: '4px',
-                              fontSize: '12px', fontWeight: '800', zIndex: 10,
-                              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                            }}>
+                          {/* Promo badge top-right */}
+                          {isPromo && !isOut && (
+                            <span style={{ position: 'absolute', top: '10px', right: '10px', background: '#1D4ED8', color: '#fff', padding: '3px 8px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: '800', zIndex: 5 }}>
                               -{discountPercent}%
-                            </div>
+                            </span>
                           )}
 
-                          {/* Out of Stock Overlay */}
-                          {isOutOfStock && (
-                            <div style={{
-                              position: 'absolute', inset: 0,
-                              backgroundColor: 'rgba(255,255,255,0.3)',
-                              backdropFilter: 'grayscale(1)',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              zIndex: 20
-                            }}>
-                              <span style={{
-                                backgroundColor: '#1A1A1A', color: '#FFF',
-                                padding: '0.6rem 1.2rem', borderRadius: '4px',
-                                fontWeight: '800', textTransform: 'uppercase',
-                                letterSpacing: '1.5px', fontSize: '0.9rem',
-                                boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
-                              }}>
-                                Sold Out
-                              </span>
+                          {/* Out of stock overlay */}
+                          {isOut && (
+                            <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
+                              <span style={{ background: '#1E293B', color: '#fff', padding: '0.5rem 1.25rem', borderRadius: '6px', fontWeight: '800', fontSize: '0.85rem', letterSpacing: '1px' }}>SOLD OUT</span>
                             </div>
                           )}
 
                           <button
                             className="quick-add-btn"
-                            disabled={isOutOfStock}
-                            onClick={() => !isOutOfStock && addToCart({ ...product, price: current })}
-                            style={{
-                              cursor: isOutOfStock ? 'not-allowed' : 'pointer',
-                              opacity: isOutOfStock ? 0 : 1,
-                              visibility: isOutOfStock ? 'hidden' : 'visible'
-                            }}
+                            disabled={isOut}
+                            onClick={() => !isOut && addToCart({ ...product, price: current })}
                           >
                             <Plus size={20} />
                           </button>
                         </div>
+
                         <div className="product-info-wrapper">
-                          <div className="flex justify-between items-start mb-1">
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.35rem' }}>
                             <div>
                               <h3 className="product-name">{product.name}</h3>
                               <p className="product-tagline">{product.tagline}</p>
                             </div>
-                            <div className="product-rating flex items-center gap-1">
-                              <Star size={12} className="fill-gold text-gold" />
-                              <span>{product.rating}</span>
+                            <div className="product-rating">
+                              <Star size={12} fill="#D97706" color="#D97706" />
+                              <span style={{ color: '#374151' }}>{product.rating}</span>
                             </div>
                           </div>
                           <p className="product-desc">{product.description}</p>
-                          <div className="product-meta flex items-center justify-between mt-4">
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '1rem' }}>
                             <div className="product-price-box">
-                              {isPromo && !isOutOfStock ? (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                  <span style={{ textDecoration: 'line-through', color: '#9CA3AF', fontSize: '0.9rem' }}>
-                                    {CURRENCY}{original.toLocaleString()}
-                                  </span>
-                                  <span style={{ color: '#D4AF37', fontWeight: '800', fontSize: '1.2rem' }}>
-                                    {CURRENCY}{current.toLocaleString()}
-                                  </span>
-                                </div>
+                              {isPromo && !isOut ? (
+                                <>
+                                  <span style={{ textDecoration: 'line-through', color: '#9CA3AF', fontSize: '0.8rem', marginRight: '0.4rem' }}>₦{original.toLocaleString()}</span>
+                                  <span className="currency">₦</span>
+                                  <span className="amount" style={{ color: '#1D4ED8' }}>{Math.round(current).toLocaleString()}</span>
+                                </>
                               ) : (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                  <span className="currency">{CURRENCY}</span>
+                                <>
+                                  <span className="currency">₦</span>
                                   <span className="amount">{current.toLocaleString()}</span>
-                                  <span className="size">/ {product.size}</span>
-                                </div>
+                                  <span className="size"> / {product.size}</span>
+                                </>
                               )}
                             </div>
                             <button
                               className="shop-cart-btn"
-                              disabled={isOutOfStock}
-                              onClick={() => !isOutOfStock && addToCart({ ...product, price: current })}
-                              style={{
-                                backgroundColor: isOutOfStock ? '#E5E7EB' : undefined,
-                                color: isOutOfStock ? '#9CA3AF' : undefined,
-                                borderColor: isOutOfStock ? '#E5E7EB' : undefined,
-                                cursor: isOutOfStock ? 'not-allowed' : 'pointer'
-                              }}
+                              disabled={isOut}
+                              onClick={() => !isOut && addToCart({ ...product, price: current })}
+                              style={{ background: isOut ? '#E5E7EB' : undefined, color: isOut ? '#9CA3AF' : undefined, cursor: isOut ? 'not-allowed' : 'pointer' }}
                             >
-                              {isOutOfStock ? 'Sold Out' : 'Add'}
+                              {isOut ? 'Sold Out' : 'Add'}
                             </button>
                           </div>
                         </div>
@@ -842,216 +638,168 @@ const Shop = () => {
                     );
                   })
                 ) : (
-                  <div className="no-results py-20 text-center">
-                    <Search size={48} className="mx-auto mb-4 text-gray opacity-30" />
-                    <h3>No products found</h3>
-                    <p>Try adjusting your search or filters.</p>
+                  <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '5rem 0', color: '#94A3B8' }}>
+                    <Search size={48} style={{ margin: '0 auto 1.5rem', opacity: 0.3 }} />
+                    <h3 style={{ color: '#475569', marginBottom: '0.5rem' }}>No products found</h3>
+                    <p>Try a different search term or category.</p>
                   </div>
                 )}
               </div>
             </main>
 
-            {/* Sidebar / Cart and Checkout */}
+            {/* SIDEBAR: Cart + Checkout */}
             <aside className="shop-sidebar">
-              {/* Cart Summary Card */}
-              <div className="glass-card cart-sidebar-card mb-6">
-                <div className="card-header flex items-center justify-between mb-6">
-                  <h2 className="flex items-center gap-2">
-                    <ShoppingBag size={20} className="text-gold" />
+              {/* Cart */}
+              <div className="glass-card" style={{ marginBottom: '1.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                  <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#fff', fontSize: '1.1rem', margin: 0 }}>
+                    <ShoppingBag size={18} style={{ color: '#60A5FA' }} />
                     Your Basket
                   </h2>
-                  <span className="cart-count">{cart.reduce((sum, i) => sum + i.quantity, 0)} items</span>
+                  <span className="cart-count">{cartCount} items</span>
                 </div>
 
                 {cart.length === 0 ? (
-                  <div className="empty-cart text-center py-10">
-                    <Package size={40} className="mx-auto mb-4 text-gray opacity-20" />
-                    <p>Your basket is empty. Start shopping!</p>
+                  <div style={{ textAlign: 'center', padding: '2.5rem 0', color: '#64748B' }}>
+                    <Package size={40} style={{ margin: '0 auto 1rem', opacity: 0.3 }} />
+                    <p style={{ fontSize: '0.9rem', color: '#94A3B8', margin: 0 }}>Your basket is empty.<br />Browse products and add items!</p>
                   </div>
                 ) : (
-                  <div className="cart-content">
-                    <div className="cart-item-list max-h-[400px] overflow-y-auto mb-6 pr-2">
-                      {cart.map((item) => (
-                        <div key={item.id} className="cart-item-modern flex items-center gap-4 mb-4">
+                  <div>
+                    {/* Items */}
+                    <div style={{ maxHeight: '320px', overflowY: 'auto', marginBottom: '1.25rem' }}>
+                      {cart.map(item => (
+                        <div key={item.id} className="cart-item-modern" style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', marginBottom: '0.875rem' }}>
                           <div className="cart-item-img">
-                            <img src={item.image} alt={item.name} />
+                            <img src={item.image} alt={item.name} onError={e => { e.target.src = 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=100&q=80'; }} />
                           </div>
-                          <div className="flex-1">
-                            <h4 className="text-white font-medium text-sm m-0 leading-tight">{item.name}</h4>
-                            <p className="text-white/60 text-xs mt-1 m-0">{item.size} • {CURRENCY}{item.price.toLocaleString()}</p>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <h4 style={{ fontSize: '0.825rem', fontWeight: '700', color: '#fff', margin: '0 0 0.15rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</h4>
+                            <p style={{ fontSize: '0.75rem', color: '#94A3B8', margin: 0 }}>₦{item.price.toLocaleString()}</p>
                           </div>
-                          <div className="cart-item-qty flex items-center gap-2 bg-white/5 rounded px-2 py-1 border border-white/10">
-                            <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="text-white/70 hover:text-white transition-colors"><Minus size={12} /></button>
-                            <span className="text-white text-xs font-medium w-4 text-center">{item.quantity}</span>
-                            <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="text-white/70 hover:text-white transition-colors"><Plus size={12} /></button>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.06)', borderRadius: '8px', padding: '0.25rem 0.5rem', border: '1px solid rgba(255,255,255,0.08)' }}>
+                            <button onClick={() => updateQty(item.id, item.quantity - 1)} style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', display: 'flex', padding: 0 }}><Minus size={12} /></button>
+                            <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#fff', minWidth: '18px', textAlign: 'center' }}>{item.quantity}</span>
+                            <button onClick={() => updateQty(item.id, item.quantity + 1)} style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', display: 'flex', padding: 0 }}><Plus size={12} /></button>
                           </div>
-                          <button onClick={() => removeFromCart(item.id)} className="text-white/40 hover:text-red-400 transition-colors p-1"><Trash2 size={16} /></button>
+                          <button onClick={() => removeItem(item.id)} style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', display: 'flex', padding: '0.25rem' }}>
+                            <Trash2 size={15} />
+                          </button>
                         </div>
                       ))}
                     </div>
 
-                    <div className="cart-totals-area pt-4 border-t border-white/20">
-                      <div className="totals-row flex justify-between mb-2">
-                        <span>Subtotal</span>
-                        <span className="font-semibold">{CURRENCY}{cartTotals.subtotal.toLocaleString()}</span>
-                      </div>
-                      <div className="totals-row flex justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <span>Delivery Fee</span>
-                          <div className="tooltip-icon"><Truck size={12} /></div>
-                        </div>
-                        <span>{CURRENCY}{cartTotals.delivery.toLocaleString()}</span>
-                      </div>
-
-                      {/* Coupon Section */}
-                      <div className="my-4 pt-2 border-t border-dashed border-white/20">
-                        {!activeCoupon ? (
-                          <div className="flex flex-col gap-2">
-                            <div className="flex gap-2">
-                              <input
-                                type="text"
-                                placeholder="Have a coupon? Enter code"
-                                value={couponCode}
-                                onChange={(e) => setCouponCode(e.target.value)}
-                                className="flex-1 bg-white/10 border border-white/20 rounded px-3 py-2 text-sm text-white placeholder-white/50 focus:outline-none focus:border-gold"
-                              />
-                              <button
-                                onClick={handleApplyCoupon}
-                                disabled={!couponCode || couponMessage.type === 'loading'}
-                                className="bg-gold text-black px-4 py-2 rounded text-sm font-semibold hover:bg-yellow-400 transition-colors disabled:opacity-50"
-                              >
-                                {couponMessage.type === 'loading' ? '...' : 'Apply'}
-                              </button>
-                            </div>
-                            {couponMessage.type === 'error' && (
-                              <div className="text-red-400 text-xs bg-red-900/20 border border-red-500/30 p-2 rounded text-center">
-                                {couponMessage.text}
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="bg-gold/10 border border-gold/30 rounded p-3 flex justify-between items-center">
-                            <div className="flex items-center gap-2">
-                              <Tag size={16} className="text-gold" />
-                              <div>
-                                <span className="block text-gold font-semibold text-xs uppercase tracking-wider">Coupon Applied</span>
-                                <span className="text-xs text-white/90">
-                                  Code <strong>{activeCoupon.code}</strong> • {activeCoupon.discountPercent}% OFF
-                                </span>
-                              </div>
-                            </div>
+                    {/* Coupon */}
+                    <div style={{ padding: '1rem 0', borderTop: '1px solid rgba(255,255,255,0.08)', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '1rem' }}>
+                      {!activeCoupon ? (
+                        <div>
+                          <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <input
+                              type="text"
+                              placeholder="Coupon code"
+                              value={couponCode}
+                              onChange={e => setCouponCode(e.target.value)}
+                              style={{ flex: 1, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', padding: '0.6rem 0.75rem', color: '#fff', fontSize: '0.85rem', fontFamily: 'inherit' }}
+                            />
                             <button
-                              onClick={() => {
-                                setActiveCoupon(null);
-                                setCouponCode('');
-                                setCouponMessage({ type: '', text: '' });
-                              }}
-                              className="text-white/40 hover:text-white transition-colors"
+                              onClick={handleApplyCoupon}
+                              disabled={!couponCode || couponMessage.type === 'loading'}
+                              style={{ background: '#1D4ED8', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.6rem 1rem', fontWeight: '700', fontSize: '0.8rem', cursor: 'pointer' }}
                             >
-                              <Trash2 size={16} />
+                              {couponMessage.type === 'loading' ? '...' : 'Apply'}
                             </button>
                           </div>
-                        )}
-                      </div>
-
-                      {activeCoupon && (
-                        <div className="totals-row flex justify-between mb-2 text-gold">
-                          <span>Discount ({activeCoupon.discountPercent}%)</span>
-                          <span>- {CURRENCY}{cartTotals.discount.toLocaleString()}</span>
+                          {couponMessage.type === 'error' && <p style={{ color: '#F87171', fontSize: '0.75rem', marginTop: '0.5rem', marginBottom: 0 }}>{couponMessage.text}</p>}
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: '8px', padding: '0.75rem' }}>
+                          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                            <Tag size={14} color="#60A5FA" />
+                            <span style={{ fontSize: '0.8rem', color: '#93C5FD', fontWeight: '700' }}>
+                              {activeCoupon.code} — {activeCoupon.discountPercent}% OFF
+                            </span>
+                          </div>
+                          <button onClick={() => { setActiveCoupon(null); setCouponCode(''); setCouponMessage({ type: '', text: '' }); }} style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer' }}>
+                            <X size={14} />
+                          </button>
                         </div>
                       )}
-                      <div className="totals-row flex justify-between items-center mt-4 pt-4 border-t border-white/30 text-lg font-bold">
-                        <span>Grand Total</span>
-                        <span className="text-gold">{CURRENCY}{cartTotals.total.toLocaleString()}</span>
-                      </div>
+                    </div>
 
-                      <div className="flex gap-2 mt-6">
-                        <button className="btn btn-clear flex-1" onClick={clearCart}>Restart</button>
-                        {/* The checkout trigger is the form below */}
+                    {/* Totals */}
+                    <div style={{ fontSize: '0.875rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94A3B8' }}>
+                        <span>Subtotal</span><span style={{ color: '#fff' }}>₦{cartTotals.subtotal.toLocaleString()}</span>
                       </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94A3B8' }}>
+                        <span>Delivery Fee</span><span style={{ color: '#fff' }}>₦{cartTotals.delivery.toLocaleString()}</span>
+                      </div>
+                      {activeCoupon && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', color: '#34D399' }}>
+                          <span>Coupon Discount</span><span>-₦{cartTotals.discount.toLocaleString()}</span>
+                        </div>
+                      )}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '800', fontSize: '1.05rem', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '0.75rem', marginTop: '0.25rem' }}>
+                        <span style={{ color: '#fff' }}>Total</span>
+                        <span style={{ color: '#60A5FA' }}>₦{cartTotals.total.toLocaleString()}</span>
+                      </div>
+                    </div>
+
+                    <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem' }}>
+                      <button className="btn-clear" onClick={clearCart} style={{ flex: 1 }}>Clear Basket</button>
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* Secure Checkout Card */}
-              <div className="glass-card checkout-sidebar-card">
-                <div className="card-header mb-6">
-                  <h2 className="flex items-center gap-2">
-                    <CreditCard size={20} className="text-gold" />
+              {/* Checkout Form */}
+              <div className="glass-card">
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#fff', fontSize: '1.1rem', margin: '0 0 0.25rem' }}>
+                    <CreditCard size={18} style={{ color: '#60A5FA' }} />
                     Secure Checkout
                   </h2>
-                  <p className="text-xs text-white/60">Fill details to place your order</p>
+                  <p style={{ color: '#64748B', fontSize: '0.8rem', margin: 0 }}>Fill details to place your order</p>
                 </div>
 
                 <form onSubmit={handlePlaceOrder} className="modern-form">
                   <div className="form-group">
-                    <label>Receiver's Name</label>
-                    <input
-                      name="fullName"
-                      required
-                      value={checkoutForm.fullName}
-                      onChange={handleFormChange}
-                      placeholder="Yinka Michael"
-                    />
+                    <label>Full Name *</label>
+                    <input name="fullName" required placeholder="Yinka Michael" value={checkoutForm.fullName} onChange={e => setCheckoutForm(p => ({ ...p, fullName: e.target.value }))} />
                   </div>
                   <div className="form-group">
-                    <label>Email Address</label>
-                    <input
-                      name="email"
-                      type="email"
-                      required
-                      value={checkoutForm.email}
-                      onChange={handleFormChange}
-                      placeholder="anthony@lifelineglobaloption.com"
-                    />
+                    <label>Email Address *</label>
+                    <input name="email" type="email" required placeholder="you@email.com" value={checkoutForm.email} onChange={e => setCheckoutForm(p => ({ ...p, email: e.target.value }))} />
                   </div>
                   <div className="form-group">
-                    <label>Phone Number</label>
-                    <input
-                      name="phone"
-                      required
-                      type="tel"
-                      value={checkoutForm.phone}
-                      onChange={handleFormChange}
-                      placeholder="+234..."
-                    />
+                    <label>Phone Number *</label>
+                    <input name="phone" type="tel" required placeholder="+234 800 000 0000" value={checkoutForm.phone} onChange={e => setCheckoutForm(p => ({ ...p, phone: e.target.value }))} />
                   </div>
                   <div className="form-group">
-                    <label>Delivery Address</label>
-                    <textarea
-                      name="address"
-                      required
-                      value={checkoutForm.address}
-                      onChange={handleFormChange}
-                      placeholder="Flat, Street, Area, LGA..."
-                      rows="2"
-                    ></textarea>
+                    <label>Delivery Address *</label>
+                    <textarea name="address" required rows="2" placeholder="Street, Area, LGA..." value={checkoutForm.address} onChange={e => setCheckoutForm(p => ({ ...p, address: e.target.value }))} />
                   </div>
-                  <div className="form-group mb-6">
+                  <div className="form-group">
                     <label>State</label>
-                    <select
-                      name="state"
-                      value={checkoutForm.state}
-                      onChange={handleFormChange}
-                    >
+                    <select value={checkoutForm.state} onChange={e => setCheckoutForm(p => ({ ...p, state: e.target.value }))}>
                       <option value="">Select State</option>
-                      <option value="Lagos">Lagos</option>
-                      <option value="Ogun">Ogun</option>
-                      <option value="Kwara">Kwara</option>
-                      <option value="Abuja">Abuja</option>
-                      <option value="Other">Other State</option>
+                      {['Lagos', 'Ogun', 'Kwara', 'Abuja', 'Kano', 'Rivers', 'Oyo', 'Delta', 'Other'].map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                   </div>
 
-                  <button type="submit" className="place-order-btn flex items-center justify-center gap-3 w-full py-4 rounded-xl bg-gold text-black font-bold uppercase tracking-widest text-sm hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50" disabled={cart.length === 0}>
-                    Place Your Order
-                    <ArrowRight size={18} />
+                  <button
+                    type="submit"
+                    className="place-order-btn"
+                    disabled={cart.length === 0}
+                    style={{ width: '100%', padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', fontSize: '0.95rem', marginTop: '0.5rem' }}
+                  >
+                    Place Order <ArrowRight size={18} />
                   </button>
 
-                  <div className="security-footer flex items-center justify-center gap-4 mt-6 text-[10px] uppercase tracking-tighter text-white/40">
-                    <span className="flex items-center gap-1"><CheckCircle size={10} /> Secure SSL</span>
-                    <span className="flex items-center gap-1"><CheckCircle size={10} /> Data Encrypted</span>
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', marginTop: '1rem', fontSize: '0.7rem', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><CheckCircle size={10} /> SSL Secured</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Shield size={10} /> Encrypted</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Activity size={10} /> NAFDAC</span>
                   </div>
                 </form>
               </div>
@@ -1060,30 +808,22 @@ const Shop = () => {
         </div>
       </section>
 
-      {/* Trust Badges Section */}
-      <section className="section bg-white border-t border-gray-100">
+      {/* Trust Section */}
+      <section style={{ padding: '4rem 0', backgroundColor: '#fff', borderTop: '1px solid #E2E8F0' }}>
         <div className="container">
-          <div className="grid grid-cols-4 gap-8">
-            <div className="trust-item flex flex-col items-center text-center">
-              <div className="trust-icon"><CheckCircle /></div>
-              <h5>Quality Assured</h5>
-              <p className="text-xs">Every product is tested</p>
-            </div>
-            <div className="trust-item flex flex-col items-center text-center">
-              <div className="trust-icon"><Truck /></div>
-              <h5>Swift Logistics</h5>
-              <p className="text-xs">Tracked delivery service</p>
-            </div>
-            <div className="trust-item flex flex-col items-center text-center">
-              <div className="trust-icon"><Package /></div>
-              <h5>Safe Packaging</h5>
-              <p className="text-xs">Hygienically sealed</p>
-            </div>
-            <div className="trust-item flex flex-col items-center text-center">
-              <div className="trust-icon"><TrendingUp /></div>
-              <h5>Farmer Support</h5>
-              <p className="text-xs">Direct from local farms</p>
-            </div>
+          <div className="grid grid-cols-4 gap-4">
+            {[
+              { icon: <Shield size={24} />, title: 'NAFDAC Certified', text: 'All drugs are verified' },
+              { icon: <Truck size={24} />, title: 'Nationwide Delivery', text: 'Tracked shipments' },
+              { icon: <Package size={24} />, title: 'Safe Packaging', text: 'Hygienically sealed' },
+              { icon: <Heart size={24} />, title: 'Clinical Support', text: 'Pharmacist on call' }
+            ].map((item, i) => (
+              <div key={i} className="trust-item" style={{ textAlign: 'center' }}>
+                <div className="trust-icon">{item.icon}</div>
+                <h5 style={{ fontSize: '0.9rem', fontWeight: '800', color: '#1E293B', marginBottom: '0.25rem' }}>{item.title}</h5>
+                <p style={{ fontSize: '0.8rem', color: '#64748B', margin: 0 }}>{item.text}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -1091,55 +831,34 @@ const Shop = () => {
       <Footer
         companyName="Lifeline Healthcare Global Options"
         registration="RC 1506925"
-        address="Okewande Street, Budo Nuhu Village, Airport Area, Asa L.G.A., Kwara State"
-        email="info@reneegoldenmultiventures.com"
+        address="Okewande Street, Budo Nuhu Village, Airport Area, Kwara State"
+        email="pharmacy@lifelinehealthcareglobal.com"
         phone="+234-XXX-XXX-XXXX"
-        aboutText="A diversified agricultural, industrial, and investment company committed to long-term value creation."
+        aboutText="Lifeline Pharmacy — certified medications, supplements and wellness products delivered nationwide."
         quickLinks={[
           { label: 'Home', url: '/' },
-          { label: 'Shop', url: '/shop' },
-          { label: 'Investments', url: '/investments' },
-          { label: 'Partners', url: '/partners' },
+          { label: 'About', url: '/about' },
+          { label: 'Pharmacy', url: '/shop' },
           { label: 'Contact', url: '/contact' },
-          { label: 'Privacy Policy', url: '/privacy' },
-          { label: 'Terms', url: '/terms' },
+          { label: 'Privacy', url: '/privacy' }
         ]}
-        ctaText="Partner With Us"
-        ctaLink="/contact"
+        ctaText="Staff Portal"
+        ctaLink="/login"
       />
-      {/* Product Details Modal */}
+
+      {/* Product Modal */}
       {viewingProduct && (
-        <ProductDetailsModal
-          product={viewingProduct}
-          similarProducts={products.filter(p =>
-            p.category === viewingProduct.category &&
-            p.id !== viewingProduct.id
-          ).slice(0, 3)}
-          onClose={() => setViewingProduct(null)}
-          onAddToCart={addToCart}
-          onProductClick={setViewingProduct}
-        />
+        <ProductModal product={viewingProduct} onClose={() => setViewingProduct(null)} onAddToCart={addToCart} />
       )}
-      {/* Floating Cart Bubble */}
-      <a
-        href="#cart-section"
-        className={`floating-cart-bubble ${cart.length > 0 ? 'has-items' : ''}`}
-        onClick={(e) => {
-          e.preventDefault();
-          const target = document.querySelector('.shop-sidebar');
-          if (target) {
-            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
-        }}
-        style={{ textDecoration: 'none' }}
+
+      {/* Floating Cart */}
+      <button
+        className={`floating-cart-bubble ${cartCount > 0 ? 'has-items' : ''}`}
+        onClick={() => document.querySelector('.shop-sidebar')?.scrollIntoView({ behavior: 'smooth' })}
       >
-        <ShoppingBag size={28} />
-        {cart.length > 0 && (
-          <span className="item-count">
-            {cart.reduce((sum, item) => sum + item.quantity, 0)}
-          </span>
-        )}
-      </a>
+        <ShoppingBag size={24} />
+        {cartCount > 0 && <span className="item-count">{cartCount}</span>}
+      </button>
     </div>
   );
 };
