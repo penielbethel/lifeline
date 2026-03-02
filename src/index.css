@@ -56,6 +56,83 @@
 
 html { scroll-behavior: smooth; }
 
+/* ── NAVBAR HEIGHT TOKEN ─────────────────────────────────── */
+:root {
+  --navbar-h: 68px;
+}
+
+/* Utility: push page content below fixed navbar */
+.page-top { padding-top: var(--navbar-h); }
+
+/* Hero sections – always clear of fixed nav */
+.hero {
+  padding-top: calc(var(--navbar-h) + 4rem) !important;
+  min-height: 60vh;
+}
+.hero-sm {
+  padding-top: calc(var(--navbar-h) + 3rem) !important;
+  min-height: 45vh;
+}
+
+/* ======================================================
+   iPHONE SE & SMALL SCREENS (≤ 375px)
+   ====================================================== */
+@media (max-width: 375px) {
+  body { font-size: 14px; }
+  .container { padding: 0 0.875rem; }
+
+  .shop-hero { padding: 7rem 0 3rem !important; }
+  .shop-title { font-size: 1.75rem !important; line-height: 1.15; }
+  .shop-subtitle { font-size: 0.85rem !important; }
+  .shop-pill { font-size: 0.65rem; padding: 0.3rem 0.9rem; }
+  .shop-search-bar input { font-size: 0.85rem; padding: 0.9rem 1rem 0.9rem 2.75rem; }
+
+  .shop-filters-container { gap: 0.5rem !important; }
+  .filter-pill { padding: 0.45rem 0.8rem !important; font-size: 0.72rem !important; gap: 0.3rem; }
+  .filter-pill svg { width: 12px; height: 12px; }
+
+  .shop-features.grid { grid-template-columns: 1fr !important; gap: 0.6rem !important; }
+  .shop-feature-card { padding: 0.9rem; }
+  .f-icon-box { width: 36px; height: 36px; }
+  .shop-feature-card h4 { font-size: 0.8rem; }
+  .shop-feature-card p { font-size: 0.72rem; }
+
+  .shop-grid { grid-template-columns: 1fr !important; gap: 1rem !important; }
+  .shop-layout { grid-template-columns: 1fr !important; }
+
+  .modern-product-card { border-radius: 14px !important; }
+  .product-image-wrapper { aspect-ratio: 16/9 !important; }
+  .product-info-wrapper { padding: 1rem !important; }
+  .product-name { font-size: 0.9rem !important; }
+  .product-tagline { font-size: 0.72rem !important; }
+  .product-desc { font-size: 0.75rem !important; }
+  .amount { font-size: 1.1rem !important; }
+  .shop-cart-btn { padding: 0.4rem 0.9rem !important; font-size: 0.75rem !important; }
+  .quick-add-btn { width: 44px; height: 44px; }
+
+  .glass-card { padding: 1.25rem !important; border-radius: 14px !important; }
+  .cart-item-img { width: 38px !important; height: 38px !important; }
+
+  .modern-form label { font-size: 0.68rem; }
+  .modern-form input,
+  .modern-form select,
+  .modern-form textarea { font-size: 0.85rem; padding: 0.7rem 0.85rem; }
+
+  .trust-item { padding: 1rem 0.5rem; }
+  .trust-icon { width: 44px; height: 44px; }
+
+  .floating-cart-bubble { width: 48px; height: 48px; bottom: 16px; right: 16px; }
+  .floating-cart-bubble .item-count { width: 18px; height: 18px; font-size: 9px; }
+}
+
+@media (max-width: 320px) {
+  h1 { font-size: 1.65rem !important; }
+  h2 { font-size: 1.4rem !important; }
+  .shop-title { font-size: 1.5rem !important; }
+  .filter-pill { font-size: 0.65rem !important; padding: 0.35rem 0.65rem !important; }
+}
+
+
 body {
   font-family: var(--font-body);
   background-color: #FFFFFF;

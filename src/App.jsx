@@ -12,6 +12,7 @@ import Legal from './pages/Legal';
 import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
 import HealthCorner from './pages/HealthCorner';
+import Hospital from './pages/Hospital';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
       <div className="app">
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/hospital" element={<Hospital />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/shop" element={<Shop />} />
           <Route path="/about" element={<About />} />
