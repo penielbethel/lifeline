@@ -442,22 +442,68 @@ p { margin-bottom: 1rem; color: var(--gray-700); }
 
 /* === FOOTER === */
 .footer {
-  background: var(--dark);
-  color: var(--white);
-  padding: 5rem 0 2rem;
+  background: #0F172A;
+  color: #fff;
+  padding: 4rem 0 0;
   border-top: 4px solid var(--primary);
+  /* Prevent any child from busting out */
+  overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
 }
-.footer h3 { color: #60A5FA; font-size: 1.1rem; margin-bottom: 1.25rem; }
-.footer p, .footer li { color: #94A3B8; font-size: 0.9rem; margin-bottom: 0.75rem; }
+
+/* Footer inherits container padding — ensure it never overflows */
+.footer .container {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.footer h4 { color: #60A5FA; font-size: 0.8rem; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 1.25rem; }
+.footer p  { color: #94A3B8; font-size: 0.875rem; line-height: 1.65; }
+.footer a  { color: #94A3B8; text-decoration: none; transition: color 0.2s; word-break: break-word; }
 .footer a:hover { color: #60A5FA; }
+.footer ul { list-style: none; padding: 0; margin: 0; }
+.footer li { margin-bottom: 0.5rem; }
+
 .footer-bottom {
-  margin-top: 3rem;
-  padding-top: 2rem;
-  border-top: 1px solid rgba(255,255,255,0.08);
-  text-align: center;
-  color: #475569;
-  font-size: 0.8rem;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  padding: 1.5rem 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
 }
+.footer-bottom p { color: #475569; font-size: 0.78rem; margin: 0; }
+
+/* ── iPhone SE and very small screens ─────────────────────────── */
+@media (max-width: 480px) {
+  .footer { padding: 3rem 0 0; }
+  /* Footer grid wraps to 2 cols on tablets but 1 col on phones */
+}
+
+@media (max-width: 375px) {
+  .footer { padding: 2.5rem 0 0; }
+  .footer .container { padding: 0 1rem; }
+  .footer h4 { font-size: 0.72rem; margin-bottom: 1rem; }
+  .footer p,
+  .footer a { font-size: 0.8rem; }
+  /* Force single column in footer grid */
+  .footer [style*="grid-template-columns: repeat(auto-fit"] {
+    grid-template-columns: 1fr !important;
+  }
+  .footer-bottom {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 1rem 0;
+  }
+  .footer-bottom p,
+  .footer-bottom a { font-size: 0.72rem; }
+}
+
 
 /* === BACKGROUNDS === */
 .bg-light { background-color: var(--light-gray); }
